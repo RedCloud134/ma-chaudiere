@@ -1,0 +1,59 @@
+MA CHAUDIÈRE MAZOUT — V0.3 / ÉTAPE 1 — VERSION DE TEST
+=====================================================
+
+IMPORTANT : NE PAS REMPLACER LA V0.2 PUBLIÉE PAR CE PROTOTYPE.
+Ne pas remplacer les fichiers à la racine du dépôt GitHub Pages.
+
+Ce dossier contient une copie indépendante de la V0.2, avec :
+- correction du calcul de stock après correction de référence ;
+- possibilité d'encoder le compteur à la date de correction (recommandé) ;
+- estimation SIGNALÉE en l'absence du compteur à la correction ;
+- blocage des dates/heures futures, contrôle des valeurs et de la chronologie ;
+- boutons « Date et heure actuelles » ;
+- sauvegarde locale de l'état avant une modification et bouton d'annulation ;
+- import des sauvegardes JSON V0.2 dans un ESPACE DE TEST V0.3 ;
+- compatibilité avec les fonctions précédentes : relevés, météo, export CSV.
+
+STOCKAGE
+La clé locale du test est « chaudiere-hornu-v03-test-etape1 ».
+Elle est différente de « chaudiere-hornu-v2 ». Aucun chargement automatique
+ni effacement des données V0.2 existantes n'a lieu.
+Les données restent propres au navigateur et au profil utilisés.
+
+TEST SUR PC
+Le plus sûr consiste à héberger ce DOSSIER dans un sous-répertoire
+séparé de ton site existant (exemple : /ma-chaudiere/test-v03/).
+C'est un prototype non publié. Il peut aussi être lancé avec un serveur
+local de test (pas directement avec file:// pour les fonctionnalités PWA).
+
+AUCUN FICHIER DU PROTOTYPE NE DOIT ÊTRE MIS À LA RACINE DU SITE
+EXISTANT TANT QUE LA V0.3 N'A PAS ÉTÉ VALIDÉE.
+
+À PROPOS DES CORRECTIONS DE STOCK
+La correction est un NOUVEAU stock de départ, à sa date/heure.
+Il est conseillé d'introduire la valeur du compteur brûleur à ce moment.
+Sans valeur de compteur, l'application estime celle-ci en répartissant
+la variation du compteur entre les deux relevés qui encadrent la correction.
+Il s'agit d'une approximation, pas d'une mesure réelle.
+
+Les livraisons antérieures au stock de référence initial du 27/10/2026
+ne sont PAS ajoutées à nouveau ; les dates et quantités sont conservées.
+Une livraison survenant à la même minute qu'une correction est considérée
+comme déjà incluse dans le stock corrigé.
+
+SÉCURITÉ
+- Exporter une sauvegarde JSON V0.2 réelle avant tout essai.
+- Tester avec une COPIE du JSON, ou des données fictives.
+- L'import JSON en V0.3 de test ne modifie pas la V0.2.
+- Une copie de l'état précédent est conservée en local après chaque écriture ;
+  le bouton « Annuler la dernière modification » peut la rétablir.
+- La restauration propose aussi le téléchargement d'une copie précédente.
+- Les sauvegardes JSON de test sont compatibles avec le format V0.3 (version=3).
+  La V0.2 n'est pas conçue pour lire ces nouvelles sauvegardes : ne jamais
+  utiliser un JSON V0.3 pour remplacer directement les données V0.2.
+
+À VENIR (NON INCLUS DANS CETTE ÉTAPE 1)
+- thèmes visuels, jauge verticale, historique visuel ;
+- noms d'exports horodatés, partage Android ;
+- enrichissement météo et du CSV ;
+- synchronisation V0.3.1.
