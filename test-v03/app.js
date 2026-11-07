@@ -13,9 +13,9 @@ function commit(next,success='Modification enregistrée.',allowRecovery=false){
   const reason=C.validate(next);
   if(reason){message('Enregistrement refusé : '+reason,true);return false}
   try{
-    // Sauvegarde locale automatiquement avant chaque changement réussi.
+    // Conserver aussi le tout premier état en l’absence de sauvegarde précédente.
     const previous=localStorage.getItem(KEY);
-    if(previous)localStorage.setItem(PREVIOUS,previous);
+    localStorage.setItem(PREVIOUS,previous??JSON.stringify(data));
     localStorage.setItem(KEY,JSON.stringify({...next,version:3}));
     data=C.normalize(next);storageReady=true;render();message(success);return true;
   }catch(err){message('Stockage local indisponible : rien n’a été modifié. Exporte ta sauvegarde JSON. '+err.message,true);return false}
@@ -25,29 +25,32 @@ function add(grid,label,value){
   a.textContent=label;b.textContent=value;grid.append(a,b);
 }
 function render(){
-  const rs=C.readings(data),last=rs.at(-1),current=last?.meter??data.baseMeter,lastTemp=last?.temp??data.baseSetpoint;
+  const rs=C.readings(data),last=rs.at(-1),current=C.meterLatestAt(data,C.localNow()),lastTemp=last?.temp??data.baseSetpoint;
   const stock=C.stockAt(data,C.localNow());
   $('stock').textContent=fmt(stock.liters)+' L'+(data.initialStockProvisional&&!data.anchors.length?' *':'')+(stock.estimated?' ≈':'');
   $('meterNow').textContent=fmt(current)+' h';
-  $('used').textContent=fmt((current-data.baseMeter)*C.RATE,2)+' L';
+  const total=C.cumulative(data,C.localNow());
+  $('used').textContent=fmt(total.liters,2)+' L'+(total.estimated?' ≈':'');
+  $('rateNow').textContent=fmt(C.rateAt(data,C.localNow()),2)+' L/h';
   $('usedLabel').textContent='Consommation depuis le '+new Date(data.baseDate).toLocaleDateString('fr-BE');
-  $('readingDate').min=$('anchorDate').min=data.baseDate;
+  $('readingDate').min=$('anchorDate').min=$('rateDate').min=data.baseDate;
   $('setpoint').textContent=fmt(lastTemp)+' °C';
   if(document.activeElement!==$('readingTemp'))$('readingTemp').value=fmt(lastTemp);
-  const approximate=data.anchors.some(a=>a.meter==null&&C.meterAt(data,a.when).estimated);
-  $('calcNotice').textContent=approximate?'⚠ Au moins une correction de stock n’a pas de valeur de compteur à cet instant : la consommation après correction est une estimation.':'Les calculs utilisent les relevés et les éventuels compteurs de correction enregistrés.';
+  const approximate=data.anchors.some(a=>a.meter==null&&C.meterAt(data,a.when).estimated)||C.rateChanges(data).some(a=>a.meter==null&&C.meterAt(data,a.when).estimated);
+  $('calcNotice').textContent=approximate?'⚠ Un compteur manque lors d’une correction ou d’un changement de débit : les calculs concernés sont approximatifs.':'Consommations calculées selon l’historique des débits et les compteurs renseignés.';
   $('calcNotice').className='muted tiny'+(approximate?' status-warning':'');
   const list=$('history');list.replaceChildren();const es=C.events(data).reverse();
   if(!es.length){const p=document.createElement('p');p.className='muted';p.textContent='Aucun événement enregistré.';list.append(p)}
   for(const e of es){
-    const item=document.createElement('div');item.className='event'+(e.type==='anchor'&&e.meter==null?' event-uncertain':'');
+    const item=document.createElement('div');item.className='event'+((e.type==='anchor'||e.type==='rate')&&e.meter==null?' event-uncertain':'');
     const head=document.createElement('div');head.className='event-head';const strong=document.createElement('strong');
-    strong.textContent=({reading:'Relevé',delivery:'Livraison',anchor:'Correction du stock'})[e.type]+' · '+e.when.replace('T',' ');
+    strong.textContent=({reading:'Relevé',delivery:'Livraison',anchor:'Correction du stock',rate:'Changement de débit'})[e.type]+' · '+e.when.replace('T',' ');
     head.append(strong);item.append(head);const grid=document.createElement('div');grid.className='data';
     if(e.type==='reading'){
       const prev=rs.filter(r=>r.when<e.when).at(-1),diff=e.meter-(prev?.meter??data.baseMeter),s=C.stockAt(data,e.when);
+      const portion=C.fuelBetween(data,prev?.when??data.baseDate,prev?.meter??data.baseMeter,e.when,e.meter);
       add(grid,'Compteur',fmt(e.meter)+' h');add(grid,'Depuis relevé précédent',fmt(diff)+' h');
-      add(grid,'Consommation',fmt(diff*C.RATE,2)+' L');add(grid,'Stock théorique à la date',fmt(s.liters,1)+' L'+(s.estimated?' (estimé)':''));
+      add(grid,'Consommation',fmt(portion.liters,2)+' L'+(portion.estimated?' (estimée)':''));add(grid,'Stock théorique à la date',fmt(s.liters,1)+' L'+(s.estimated?' (estimé)':''));
       add(grid,'Consigne',fmt(e.temp)+' °C');
       if(C.isNum(e.gauge)){
         add(grid,'Jauge',fmt(e.gauge)+' cm / ≈ '+fmt(e.gauge*C.FACTOR,0)+' L');
@@ -60,6 +63,10 @@ function render(){
       add(grid,'Quantité livrée','+'+fmt(e.liters,0)+' L');
       if(e.when<=data.baseDate)add(grid,'Prise en compte','Avant le stock initial : non ajoutée une seconde fois');
       else add(grid,'Stock après livraison',fmt(C.stockAt(data,e.when).liters,1)+' L');
+    }else if(e.type==='rate'){
+      add(grid,'Nouveau débit',fmt(e.rate,2)+' L/h');
+      add(grid,'Ancien débit',fmt(C.rateChanges(data).filter(r=>r.when<e.when).at(-1)?.rate??(data.baseRate??C.RATE),2)+' L/h');
+      add(grid,'Compteur au réglage',C.isNum(e.meter)?fmt(e.meter)+' h (mesuré)':'Non relevé : estimation de consommation');
     }else{
       add(grid,'Nouveau stock de référence',fmt(e.liters,1)+' L');
       if(C.isNum(e.meter))add(grid,'Compteur à la correction',fmt(e.meter)+' h (mesuré)');
@@ -71,7 +78,7 @@ function render(){
     const edit=document.createElement('button');edit.type='button';edit.className='secondary';edit.textContent='Modifier';edit.onclick=()=>editEvent(e);
     const del=document.createElement('button');del.type='button';del.className='danger';del.textContent='Supprimer';
     del.onclick=()=>{if(confirm('Supprimer cet événement ? Les calculs seront recalculés.')){
-      const arr=e.type==='reading'?'readings':e.type==='delivery'?'deliveries':'anchors',next=C.clone(data);
+      const arr=e.type==='reading'?'readings':e.type==='delivery'?'deliveries':e.type==='rate'?'rateChanges':'anchors',next=C.clone(data);
       next[arr]=next[arr].filter(x=>x.id!==e.id);commit(next,'Événement supprimé (état précédent conservé localement).');
     }};
     actions.append(edit,del);item.append(actions);list.append(item);
@@ -84,17 +91,35 @@ function numberValid(value,label,{min=0,strict=false}={}){
   return n;
 }
 function editEvent(e){
-  const arr=e.type==='reading'?'readings':e.type==='delivery'?'deliveries':'anchors';
+  const arr=e.type==='reading'?'readings':e.type==='delivery'?'deliveries':e.type==='rate'?'rateChanges':'anchors';
   const date=prompt('Date et heure (AAAA-MM-JJTHH:MM)',e.when);if(date===null)return;
   if(!dateFieldValid(date))return;
-  const v=prompt(e.type==='reading'?'Compteur (heures)':e.type==='delivery'?'Livraison (litres)':'Stock corrigé (litres)',String(e.type==='reading'?e.meter:e.liters));if(v===null)return;
-  const value=numberValid(v,'Valeur',{strict:e.type==='delivery'});if(value===null)return;
+  const v=prompt(e.type==='reading'?'Compteur (heures)':e.type==='delivery'?'Livraison (litres)':e.type==='rate'?'Nouveau débit (L/h)':'Stock corrigé (litres)',String(e.type==='reading'?e.meter:e.type==='rate'?e.rate:e.liters));if(v===null)return;
+  const value=numberValid(v,'Valeur',{strict:e.type==='delivery'||e.type==='rate'});if(value===null)return;
+  if(e.type==='rate'&&value>100){message('Débit supérieur à 100 L/h refusé.',true);return}
   const note=prompt('Remarque (facultative)',e.note||'');if(note===null)return;
   const updated={...e,when:date,note:note.trim()};delete updated.type;
   if(e.type==='reading'){
     updated.meter=value;
     const t=prompt('Consigne (°C)',String(e.temp));if(t===null)return;
     const temp=C.parseNum(t);if(!C.isNum(temp)){message('Consigne invalide.',true);return}updated.temp=temp;
+    // Permettre la correction, l'ajout ou l'effacement de la jauge d'un relevé existant.
+    // Une jauge absente reste null ; elle ne doit jamais corriger le stock théorique.
+    const g=prompt('Jauge (cm, facultatif ; laisser vide si aucune mesure)',C.isNum(e.gauge)?String(e.gauge):'');
+    if(g===null)return;
+    const gr=g.trim();
+    if(gr==='')updated.gauge=null;
+    else{
+      const gauge=C.parseNum(gr);
+      if(!C.isNum(gauge)||gauge<0){message('Jauge invalide : indique une valeur positive ou laisse le champ vide.',true);return}
+      updated.gauge=gauge;
+    }
+  }else if(e.type==='rate'){
+    updated.rate=value;
+    const meter=prompt('Compteur lors du changement de débit (vide = estimation)',C.isNum(e.meter)?String(e.meter):'');if(meter===null)return;
+    updated.meter=meter.trim()===''?null:numberValid(meter,'Compteur au changement de débit');
+    if(updated.meter===null&&meter.trim()!=='')return;
+    if(updated.meter===null&&!confirm('Sans compteur au changement de débit, la répartition de consommation est estimée. Continuer ?'))return;
   }else{
     updated.liters=value;
     if(e.type==='anchor'){
@@ -111,7 +136,7 @@ function editEvent(e){
 const lastAutomatic={};
 function setNow(id){const current=C.localNow(),el=$(id);el.value=current;el.max=current;lastAutomatic[id]=current}
 function refreshMax(id){$(id).max=C.localNow()}
-for(const id of ['readingDate','anchorDate','deliveryDate']){
+for(const id of ['readingDate','anchorDate','deliveryDate','rateDate']){
   setNow(id);
   const el=$(id);el.addEventListener('focus',()=>{
     if(el.value===lastAutomatic[id])setNow(id);else refreshMax(id);
@@ -138,6 +163,19 @@ $('deliveryForm').onsubmit=e=>{
   const next=C.clone(data);next.deliveries.push({id:uid(),when,liters,note:$('deliveryNote').value.trim()});
   if(commit(next,'Livraison enregistrée.')){$('deliveryLiters').value=$('deliveryNote').value='';setNow('deliveryDate')}
 };
+$('rateForm').onsubmit=e=>{
+  e.preventDefault();const when=$('rateDate').value;if(!dateFieldValid(when))return;
+  const rate=numberValid($('rateLiters').value,'Nouveau débit (L/h)',{strict:true});
+  if(rate===null)return;
+  if(rate>100){message('Débit supérieur à 100 L/h refusé.',true);return}
+  const raw=$('rateMeter').value.trim(),meter=raw===''?null:numberValid(raw,'Compteur lors du changement');
+  if(raw!==''&&meter===null)return;
+  if(meter===null&&!confirm('Aucun compteur renseigné lors du changement de débit : la consommation sur cette période sera estimée. Continuer ?'))return;
+  const next=C.clone(data);next.rateChanges.push({id:uid(),when,rate,meter,note:$('rateNote').value.trim()});
+  if(commit(next,'Changement de débit enregistré. Les consommations antérieures sont conservées.')){
+    $('rateLiters').value=$('rateMeter').value=$('rateNote').value='';setNow('rateDate');
+  }
+};
 $('anchorForm').onsubmit=e=>{
   e.preventDefault();const when=$('anchorDate').value;if(!dateFieldValid(when))return;
   const liters=numberValid($('anchorLiters').value,'Stock de référence');if(liters===null)return;
@@ -154,12 +192,13 @@ function download(name,content,type){
 const cell=x=>'"'+String(x??'').replaceAll('"','""')+'"';
 $('csvBtn').onclick=()=>{
   const rs=C.readings(data);let prev=null;
-  const table=[['Type','Date','Compteur h','Fonctionnement h','Consommation L','Stock théorique L','Jauge cm','Jauge L','Consigne °C','Température du jour °C','Moyenne période °C','Livraison L','Correction stock L','Remarque']];
+  const table=[['Type','Date','Compteur h','Fonctionnement h','Consommation L','Stock théorique L','Jauge cm','Jauge L','Consigne °C','Température du jour °C','Moyenne période °C','Livraison L','Correction stock L','Remarque','Débit actif L/h','Débit modifié L/h','Compteur au changement h']];
   for(const e of C.events(data)){
     if(e.type==='reading'){
       const diff=e.meter-(prev?.meter??data.baseMeter),avg=C.periodAvg(data,prev?.when,e.when),s=C.stockAt(data,e.when);
-      table.push(['Relevé',e.when,fmt(e.meter),fmt(diff),fmt(diff*C.RATE,2),fmt(s.liters,2),C.isNum(e.gauge)?fmt(e.gauge):'',C.isNum(e.gauge)?fmt(e.gauge*C.FACTOR):'',fmt(e.temp),C.isNum(C.dayAvg(data,e.when))?fmt(C.dayAvg(data,e.when)):'',C.isNum(avg)?fmt(avg):'','','',e.note||'']);prev=e;
-    }else table.push([e.type==='delivery'?'Livraison':'Correction',e.when,'','','',e.when<data.baseDate?'':fmt(C.stockAt(data,e.when).liters,2),'','','','','',e.type==='delivery'?fmt(e.liters):'',e.type==='anchor'?fmt(e.liters):'',e.note||'']);
+      const fuel=C.fuelBetween(data,prev?.when??data.baseDate,prev?.meter??data.baseMeter,e.when,e.meter);
+      table.push(['Relevé',e.when,fmt(e.meter),fmt(diff),fmt(fuel.liters,2),fmt(s.liters,2),C.isNum(e.gauge)?fmt(e.gauge):'',C.isNum(e.gauge)?fmt(e.gauge*C.FACTOR):'',fmt(e.temp),C.isNum(C.dayAvg(data,e.when))?fmt(C.dayAvg(data,e.when)):'',C.isNum(avg)?fmt(avg):'','','',e.note||'',fmt(C.rateAt(data,e.when),2),'','']);prev=e;
+    }else table.push([e.type==='delivery'?'Livraison':e.type==='rate'?'Changement débit':'Correction',e.when,'','','',e.when<data.baseDate?'':fmt(C.stockAt(data,e.when).liters,2),'','','','','',e.type==='delivery'?fmt(e.liters):'',e.type==='anchor'?fmt(e.liters):'',e.note||'',fmt(C.rateAt(data,e.when),2),e.type==='rate'?fmt(e.rate,2):'',e.type==='rate'&&C.isNum(e.meter)?fmt(e.meter):'']);
   }
   download('ma-chaudiere-V03-etape1-TEST.csv','\ufeff'+table.map(r=>r.map(cell).join(';')).join('\r\n'),'text/csv;charset=utf-8');
   message('Export de test CSV demandé. Le nommage horodaté complet sera intégré à l’étape 3.');

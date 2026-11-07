@@ -1,59 +1,53 @@
-MA CHAUDIÈRE MAZOUT — V0.3 / ÉTAPE 1 — VERSION DE TEST
-=====================================================
+MA CHAUDIÈRE — V0.3 / ÉTAPE 1B — VERSION DE TEST
+================================================
 
-IMPORTANT : NE PAS REMPLACER LA V0.2 PUBLIÉE PAR CE PROTOTYPE.
-Ne pas remplacer les fichiers à la racine du dépôt GitHub Pages.
+RAPPEL : NE PAS REMPLACER LA V0.2 PUBLIÉE À LA RACINE DU DÉPÔT.
+Remplacer uniquement les fichiers placés dans le sous-dossier GitHub test-v03/.
 
-Ce dossier contient une copie indépendante de la V0.2, avec :
-- correction du calcul de stock après correction de référence ;
-- possibilité d'encoder le compteur à la date de correction (recommandé) ;
-- estimation SIGNALÉE en l'absence du compteur à la correction ;
-- blocage des dates/heures futures, contrôle des valeurs et de la chronologie ;
-- boutons « Date et heure actuelles » ;
-- sauvegarde locale de l'état avant une modification et bouton d'annulation ;
-- import des sauvegardes JSON V0.2 dans un ESPACE DE TEST V0.3 ;
-- compatibilité avec les fonctions précédentes : relevés, météo, export CSV.
+CE QUE CONTIENT CETTE ÉTAPE 1B
+- Correctif d'édition des relevés : ajout, changement ou effacement d'une jauge.
+- Gestion d'un CHANGEMENT DE DÉBIT du brûleur avec date, compteur facultatif,
+  nouveau débit en litres/heure et motif.
+- Historique modifiable et suppressible des changements de débit.
+- Calcul de consommation par intervalles, chacun au débit qui y était actif.
+- Conservation des anciens débits dans les calculs rétrospectifs.
+- Compteur manquant au changement de débit = répartition estimée, clairement signalée.
+- Maintien des relevés, livraisons, corrections de stock, export CSV, météo et JSON.
+- Correction de la première annulation : état initial sauvegardé avant la première action.
+- Gestion du cache hors ligne isolée à /test-v03/ (nouvelle version du cache).
 
-STOCKAGE
-La clé locale du test est « chaudiere-hornu-v03-test-etape1 ».
-Elle est différente de « chaudiere-hornu-v2 ». Aucun chargement automatique
-ni effacement des données V0.2 existantes n'a lieu.
-Les données restent propres au navigateur et au profil utilisés.
+STOCKAGE ET COMPATIBILITÉ
+Clé inchangée : chaudiere-hornu-v03-test-etape1.
+Une V0.3 étape 1B récupère automatiquement l'état local de la V0.3 étape 1,
+sur le même navigateur et la même adresse. Aucune restauration nécessaire.
+La sauvegarde V0.2 (JSON version 2) reste IMPORTABLE dans la V0.3.
+Les propriétés nouvelles «baseRate» (débit initial = 4.2) et «rateChanges»
+(liste des événements) sont ajoutées lors de la migration ; les anciennes
+lignes de relevés sont conservées.
+Une fois exporté avec les nouveaux champs, ce JSON V0.3 n'est PAS destiné
+à être restauré dans la V0.2. Continuer les relevés réels dans la V0.2.
 
-TEST SUR PC
-Le plus sûr consiste à héberger ce DOSSIER dans un sous-répertoire
-séparé de ton site existant (exemple : /ma-chaudiere/test-v03/).
-C'est un prototype non publié. Il peut aussi être lancé avec un serveur
-local de test (pas directement avec file:// pour les fonctionnalités PWA).
+EXEMPLE DE CONTRÔLE À EFFECTUER DANS /test-v03/ UNIQUEMENT
+- Sur un jeu d'essai : compteur initial 794 h, stock 920 L, débit 4.2 L/h.
+- Relevé 795 h : consommation 4.20 L, stock 915.80 L.
+- Changement de débit à 4.5 L/h au compteur 795 h.
+- Relevé 796 h : consommation totale 8.70 L, stock 911.30 L.
+- Corriger une jauge d'un relevé : le stock théorique NE doit pas changer.
+- Tester Annuler dernière modification / Sauvegarder JSON / Restaurer JSON.
 
-AUCUN FICHIER DU PROTOTYPE NE DOIT ÊTRE MIS À LA RACINE DU SITE
-EXISTANT TANT QUE LA V0.3 N'A PAS ÉTÉ VALIDÉE.
+PRÉCAUTIONS
+Toujours télécharger une sauvegarde JSON avant de remplacer la version de test.
+Aucune écriture vers la V0.2 ; aucune synchronisation ni partage automatique.
+Le débit reste une estimation basée sur les informations du brûleur : un
+changement de pression ne fournit pas à lui seul le nouveau débit réel.
+Lors d'une saisie sans compteur mesuré, la répartition des heures repose
+sur une approximation temporelle (et est signalée par ≈).
 
-À PROPOS DES CORRECTIONS DE STOCK
-La correction est un NOUVEAU stock de départ, à sa date/heure.
-Il est conseillé d'introduire la valeur du compteur brûleur à ce moment.
-Sans valeur de compteur, l'application estime celle-ci en répartissant
-la variation du compteur entre les deux relevés qui encadrent la correction.
-Il s'agit d'une approximation, pas d'une mesure réelle.
-
-Les livraisons antérieures au stock de référence initial du 27/10/2026
-ne sont PAS ajoutées à nouveau ; les dates et quantités sont conservées.
-Une livraison survenant à la même minute qu'une correction est considérée
-comme déjà incluse dans le stock corrigé.
-
-SÉCURITÉ
-- Exporter une sauvegarde JSON V0.2 réelle avant tout essai.
-- Tester avec une COPIE du JSON, ou des données fictives.
-- L'import JSON en V0.3 de test ne modifie pas la V0.2.
-- Une copie de l'état précédent est conservée en local après chaque écriture ;
-  le bouton « Annuler la dernière modification » peut la rétablir.
-- La restauration propose aussi le téléchargement d'une copie précédente.
-- Les sauvegardes JSON de test sont compatibles avec le format V0.3 (version=3).
-  La V0.2 n'est pas conçue pour lire ces nouvelles sauvegardes : ne jamais
-  utiliser un JSON V0.3 pour remplacer directement les données V0.2.
-
-À VENIR (NON INCLUS DANS CETTE ÉTAPE 1)
-- thèmes visuels, jauge verticale, historique visuel ;
-- noms d'exports horodatés, partage Android ;
-- enrichissement météo et du CSV ;
-- synchronisation V0.3.1.
+V0.3 ÉTAPE 2 (NON ENCORE FAITE)
+Réorganisation Accueil / Historique / Réglages, code couleur distinct,
+tableau d'historique, résumé après relevé, utilisation bois/pellets, thèmes,
+paramètres de cuve et jauge verticale.
+V0.3 ÉTAPE 3 (NON ENCORE FAITE)
+Météo détaillée, exports horodatés, partage Android.
+V0.3.1 (PLUS TARD)
+Synchronisation des appareils.
