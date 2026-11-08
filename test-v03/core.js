@@ -17,11 +17,16 @@
   const localNow=()=>{const d=new Date(),p=n=>String(n).padStart(2,'0');return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`};
   const future=s=>!dateOk(s)||new Date(s).getTime()>Date.now();
   const initial=()=>({version:3,baseDate:'2026-10-27T20:00',baseMeter:794,baseStock:920,baseSetpoint:19,
-    baseRate:RATE,rateChanges:[],readings:[],deliveries:[],anchors:[],weather:{},initialStockProvisional:true});
+    baseRate:RATE,rateChanges:[],readings:[],deliveries:[],anchors:[],weather:{},initialStockProvisional:true,
+    tank:{capacity:null,shape:'unknown',length:null,width:null,height:null,diameter:null,litersPerCm:FACTOR}});
   const clone=d=>JSON.parse(JSON.stringify(d));
   const normalize=d=>({...clone(d),version:3,baseRate:d.baseRate??RATE,
+    readings:d.readings.map(r=>({...r,heatUse:r.heatUse??'unknown',pellet:r.pellet===true,wood:r.wood===true})),
+    tank:{capacity:null,shape:'unknown',length:null,width:null,height:null,diameter:null,litersPerCm:FACTOR,...(d.tank??{})},
     rateChanges:(d.rateChanges??[]).map(r=>({...r,meter:isNum(r.meter)?r.meter:null})),
     anchors:d.anchors.map(a=>({...a,meter:isNum(a.meter)?a.meter:null}))});
+  const litersPerCm=d=>d.tank?.litersPerCm??FACTOR;
+  const heatLabel=r=>r.heatUse==='none'?'Aucun':r.heatUse==='used'?[r.pellet?'Pellets':null,r.wood?'Feu ouvert':null].filter(Boolean).join(' + '):'Non renseigné';
   const sortByDate=xs=>[...xs].sort((a,b)=>a.when.localeCompare(b.when)||String(a.id).localeCompare(String(b.id)));
   const readings=d=>sortByDate(d.readings);
   const rateChanges=d=>sortByDate(d.rateChanges??[]);
@@ -90,6 +95,14 @@
     if(!Array.isArray(d.readings)||!Array.isArray(d.deliveries)||!Array.isArray(d.anchors)||
        (d.rateChanges!==undefined&&!Array.isArray(d.rateChanges)))return 'Listes de données invalides.';
     if(!d.weather||typeof d.weather!=='object'||Array.isArray(d.weather))return 'Données météo invalides.';
+    if(d.tank!==undefined){
+      if(!d.tank||typeof d.tank!=='object'||Array.isArray(d.tank))return 'Paramètres de cuve invalides.';
+      if(!['unknown','rect','horizontal','vertical','other'].includes(d.tank.shape??'unknown'))return 'Type de cuve invalide.';
+      for(const key of ['capacity','length','width','height','diameter']){
+        const n=d.tank[key];if(n!=null&&(!isNum(n)||n<=0))return 'Dimension ou capacité de cuve invalide.';
+      }
+      if(d.tank.litersPerCm!==undefined&&(!isNum(d.tank.litersPerCm)||d.tank.litersPerCm<=0))return 'Conversion de jauge invalide.';
+    }
     const ids=new Set();
     for(const [kind,items] of [['relevé',d.readings],['livraison',d.deliveries],['correction',d.anchors],['débit',d.rateChanges??[]]]){
       for(const x of items){
@@ -98,6 +111,12 @@
         if(!dateOk(x.when)||future(x.when))return `Date invalide ou future (${kind}).`;
         if(kind!=='livraison'&&x.when<d.baseDate)return `${kind} antérieur au compteur initial.`;
         if(kind==='relevé'&&(!isNum(x.meter)||x.meter<d.baseMeter||!isNum(x.temp)||!(x.gauge==null||(isNum(x.gauge)&&x.gauge>=0))))return 'Valeurs de relevé invalides.';
+        if(kind==='relevé'&&x.heatUse!==undefined){
+          if(!['unknown','none','used'].includes(x.heatUse)||
+            (x.pellet!==undefined&&typeof x.pellet!=='boolean')||
+            (x.wood!==undefined&&typeof x.wood!=='boolean')||
+            (x.heatUse==='used'&&x.pellet!==true&&x.wood!==true))return 'Chauffage complémentaire invalide.';
+        }
         if((kind==='correction'||kind==='livraison')&&(!isNum(x.liters)||x.liters<0||(kind==='livraison'&&x.liters===0)))return `Valeur de ${kind} invalide.`;
         if((kind==='correction'||kind==='débit')&&x.meter!=null&&(!isNum(x.meter)||x.meter<d.baseMeter))return `Compteur lors du ${kind} invalide.`;
         if(kind==='débit'&&(!isNum(x.rate)||x.rate<=0||x.rate>100))return 'Nouveau débit invalide (strictement positif).';
@@ -113,5 +132,5 @@
     if(cp.some((r,i)=>i>0&&r.when===cp[i-1].when&&Math.abs(r.meter-cp[i-1].meter)>1e-8))return 'Valeurs de compteur contradictoires à la même heure.';
     return null;
   };
-  return {RATE,FACTOR,isNum,parseNum,dateOk,localNow,future,initial,normalize,clone,readings,events,rateChanges,rateAt,meterAt,meterLatestAt,stockAt,cumulative,fuelBetween,dayAvg,periodAvg,validate};
+  return {RATE,FACTOR,litersPerCm,heatLabel,isNum,parseNum,dateOk,localNow,future,initial,normalize,clone,readings,events,rateChanges,rateAt,meterAt,meterLatestAt,stockAt,cumulative,fuelBetween,dayAvg,periodAvg,validate};
 });

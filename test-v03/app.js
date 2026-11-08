@@ -1,10 +1,11 @@
-/* Ma Chaudière — V0.3 étape 1 (bêta indépendante de la V0.2 publiée) */
+/* Ma Chaudière — V0.3 étape 2 TEST — stockage compatible étape 1B. */
 'use strict';
 const C=globalThis.ChaudiereCore;
 const KEY='chaudiere-hornu-v03-test-etape1',PREVIOUS=KEY+'-avant-derniere-modification';
 const $=id=>document.getElementById(id),fmt=(x,n=1)=>C.isNum(x)?x.toLocaleString('fr-BE',{minimumFractionDigits:n,maximumFractionDigits:n}):'—';
 const uid=()=>globalThis.crypto?.randomUUID?.()||String(Date.now())+'-'+Math.random().toString(36).slice(2);
 let data=C.initial();
+let historyShowAll=false, lastSavedReadingId=null;
 let storageReady=true;
 try{const raw=localStorage.getItem(KEY);if(raw){const parsed=JSON.parse(raw);const reason=C.validate(parsed);if(reason)throw Error(reason);data=C.normalize(parsed)}}catch(err){storageReady=false;console.error('Données locales non chargées :',err)}
 function message(s,error=false){$('status').textContent=s;$('status').className='notice'+(error?' error':'')}
@@ -24,6 +25,17 @@ function add(grid,label,value){
   const a=document.createElement('span'),b=document.createElement('span');
   a.textContent=label;b.textContent=value;grid.append(a,b);
 }
+const eventKind={reading:['Relevé','kind-reading'],delivery:['Livraison','kind-delivery'],anchor:['Correction','kind-anchor'],rate:['Débit','kind-rate']};
+const dateText=when=>{
+  const [d,t]=when.split('T'),[y,m,j]=d.split('-');return j+'/'+m+'/'+y+' '+t;
+};
+function showPage(name){
+  for(const el of document.querySelectorAll('.page'))el.hidden=el.id!=='page-'+name;
+  for(const b of document.querySelectorAll('[data-page]'))b.setAttribute('aria-current',b.dataset.page===name?'page':'false');
+  if(name==='historique')renderHistory();
+  window.scrollTo({top:0,behavior:'instant'});
+}
+document.querySelectorAll('[data-page]').forEach(b=>b.addEventListener('click',()=>showPage(b.dataset.page)));
 function render(){
   const rs=C.readings(data),last=rs.at(-1),current=C.meterLatestAt(data,C.localNow()),lastTemp=last?.temp??data.baseSetpoint;
   const stock=C.stockAt(data,C.localNow());
@@ -36,54 +48,124 @@ function render(){
   $('readingDate').min=$('anchorDate').min=$('rateDate').min=data.baseDate;
   $('setpoint').textContent=fmt(lastTemp)+' °C';
   if(document.activeElement!==$('readingTemp'))$('readingTemp').value=fmt(lastTemp);
+  const cap=data.tank?.capacity;
+  if(C.isNum(cap)&&cap>0){
+    const percentage=100*stock.liters/cap;
+    $('tankPct').textContent=fmt(percentage,0)+' %';
+    $('tankHelp').textContent='Capacité : '+fmt(cap,0)+' L'+(percentage>100?' (stock au-dessus de la capacité)':'');
+    $('tankFill').style.height=Math.max(0,Math.min(100,percentage))+'%';
+  }else{
+    $('tankPct').textContent='— %';$('tankHelp').textContent='Capacité à renseigner dans Réglages';$('tankFill').style.height='0%';
+  }
   const approximate=data.anchors.some(a=>a.meter==null&&C.meterAt(data,a.when).estimated)||C.rateChanges(data).some(a=>a.meter==null&&C.meterAt(data,a.when).estimated);
   $('calcNotice').textContent=approximate?'⚠ Un compteur manque lors d’une correction ou d’un changement de débit : les calculs concernés sont approximatifs.':'Consommations calculées selon l’historique des débits et les compteurs renseignés.';
-  $('calcNotice').className='muted tiny'+(approximate?' status-warning':'');
-  const list=$('history');list.replaceChildren();const es=C.events(data).reverse();
-  if(!es.length){const p=document.createElement('p');p.className='muted';p.textContent='Aucun événement enregistré.';list.append(p)}
-  for(const e of es){
-    const item=document.createElement('div');item.className='event'+((e.type==='anchor'||e.type==='rate')&&e.meter==null?' event-uncertain':'');
-    const head=document.createElement('div');head.className='event-head';const strong=document.createElement('strong');
-    strong.textContent=({reading:'Relevé',delivery:'Livraison',anchor:'Correction du stock',rate:'Changement de débit'})[e.type]+' · '+e.when.replace('T',' ');
-    head.append(strong);item.append(head);const grid=document.createElement('div');grid.className='data';
-    if(e.type==='reading'){
-      const prev=rs.filter(r=>r.when<e.when).at(-1),diff=e.meter-(prev?.meter??data.baseMeter),s=C.stockAt(data,e.when);
-      const portion=C.fuelBetween(data,prev?.when??data.baseDate,prev?.meter??data.baseMeter,e.when,e.meter);
-      add(grid,'Compteur',fmt(e.meter)+' h');add(grid,'Depuis relevé précédent',fmt(diff)+' h');
-      add(grid,'Consommation',fmt(portion.liters,2)+' L'+(portion.estimated?' (estimée)':''));add(grid,'Stock théorique à la date',fmt(s.liters,1)+' L'+(s.estimated?' (estimé)':''));
-      add(grid,'Consigne',fmt(e.temp)+' °C');
-      if(C.isNum(e.gauge)){
-        add(grid,'Jauge',fmt(e.gauge)+' cm / ≈ '+fmt(e.gauge*C.FACTOR,0)+' L');
-        add(grid,'Écart jauge – calcul',fmt(e.gauge*C.FACTOR-s.liters,1)+' L');
-      }
-      const day=C.dayAvg(data,e.when),avg=C.periodAvg(data,prev?.when,e.when);
-      add(grid,'Température extérieure du jour',C.isNum(day)?fmt(day)+' °C':'—');
-      add(grid,'Moyenne météo entre relevés',C.isNum(avg)?fmt(avg)+' °C':'—');
-    }else if(e.type==='delivery'){
-      add(grid,'Quantité livrée','+'+fmt(e.liters,0)+' L');
-      if(e.when<=data.baseDate)add(grid,'Prise en compte','Avant le stock initial : non ajoutée une seconde fois');
-      else add(grid,'Stock après livraison',fmt(C.stockAt(data,e.when).liters,1)+' L');
-    }else if(e.type==='rate'){
-      add(grid,'Nouveau débit',fmt(e.rate,2)+' L/h');
-      add(grid,'Ancien débit',fmt(C.rateChanges(data).filter(r=>r.when<e.when).at(-1)?.rate??(data.baseRate??C.RATE),2)+' L/h');
-      add(grid,'Compteur au réglage',C.isNum(e.meter)?fmt(e.meter)+' h (mesuré)':'Non relevé : estimation de consommation');
-    }else{
-      add(grid,'Nouveau stock de référence',fmt(e.liters,1)+' L');
-      if(C.isNum(e.meter))add(grid,'Compteur à la correction',fmt(e.meter)+' h (mesuré)');
-      else add(grid,'Compteur à la correction','Non relevé : estimation nécessaire');
-    }
-    if(e.note)add(grid,'Remarque',e.note);
-    item.append(grid);
-    const actions=document.createElement('div');actions.className='actions';actions.style.marginTop='12px';
-    const edit=document.createElement('button');edit.type='button';edit.className='secondary';edit.textContent='Modifier';edit.onclick=()=>editEvent(e);
-    const del=document.createElement('button');del.type='button';del.className='danger';del.textContent='Supprimer';
-    del.onclick=()=>{if(confirm('Supprimer cet événement ? Les calculs seront recalculés.')){
-      const arr=e.type==='reading'?'readings':e.type==='delivery'?'deliveries':e.type==='rate'?'rateChanges':'anchors',next=C.clone(data);
-      next[arr]=next[arr].filter(x=>x.id!==e.id);commit(next,'Événement supprimé (état précédent conservé localement).');
-    }};
-    actions.append(edit,del);item.append(actions);list.append(item);
-  }
+  $('calcNotice').className='hint'+(approximate?' status-warning':'');
+  renderHistory();
 }
+function eventDetails(e,prev){
+  const details=[];
+  const add=(label,value)=>details.push([label,value]);
+  if(e.type==='reading'){
+    const diff=e.meter-(prev?.meter??data.baseMeter),s=C.stockAt(data,e.when);
+    const fuel=C.fuelBetween(data,prev?.when??data.baseDate,prev?.meter??data.baseMeter,e.when,e.meter);
+    add('Compteur',fmt(e.meter)+' h');add('Depuis le relevé précédent',fmt(diff)+' h');
+    add('Consommation',fmt(fuel.liters,2)+' L'+(fuel.estimated?' (estimée)':''));
+    add('Stock théorique',fmt(s.liters)+' L'+(s.estimated?' ≈':''));add('Consigne',fmt(e.temp)+' °C');
+    add('Jauge',C.isNum(e.gauge)?fmt(e.gauge)+' cm / ≈ '+fmt(e.gauge*C.litersPerCm(data),0)+' L':'—');
+    if(C.isNum(e.gauge))add('Écart jauge – calcul',fmt(e.gauge*C.litersPerCm(data)-s.liters,1)+' L');
+    add('Chauffage complémentaire',C.heatLabel(e));
+    const day=C.dayAvg(data,e.when),avg=C.periodAvg(data,prev?.when,e.when);
+    add('Température extérieure du jour',C.isNum(day)?fmt(day)+' °C':'—');
+    add('Moyenne météo entre relevés',C.isNum(avg)?fmt(avg)+' °C':'—');
+  }else if(e.type==='delivery'){
+    add('Quantité livrée','+'+fmt(e.liters,0)+' L');
+    if(e.when<=data.baseDate)add('Prise en compte','Avant stock initial : non ajoutée une seconde fois');
+    else add('Stock après livraison',fmt(C.stockAt(data,e.when).liters)+' L');
+  }else if(e.type==='rate'){
+    add('Nouveau débit',fmt(e.rate,2)+' L/h');
+    add('Ancien débit',fmt(C.rateChanges(data).filter(r=>r.when<e.when).at(-1)?.rate??(data.baseRate??C.RATE),2)+' L/h');
+    add('Compteur au réglage',C.isNum(e.meter)?fmt(e.meter)+' h (mesuré)':'Non relevé : estimation');
+  }else{
+    add('Nouveau stock de référence',fmt(e.liters)+' L');
+    add('Compteur à la correction',C.isNum(e.meter)?fmt(e.meter)+' h (mesuré)':'Non relevé : estimation');
+  }
+  add('Remarque',e.note||'—');return details;
+}
+function renderHistory(){
+  const list=$('history'),es=$('historyOrder').value==='asc'?C.events(data):C.events(data).reverse(),rs=C.readings(data);
+  const filter=$('historyFilter').value,search=$('historySearch').value.trim().toLowerCase();
+  const found=es.filter(e=>{
+    if(filter!=='all'&&e.type!==filter)return false;
+    return !search||[e.when,dateText(e.when),eventKind[e.type][0],e.note||'',e.meter,e.liters,e.rate,e.gauge,fmt(e.meter),fmt(e.liters),fmt(e.rate),fmt(e.gauge)].join(' ').toLowerCase().includes(search);
+  });
+  const shown=historyShowAll?found:found.slice(0,20);
+  $('historyCount').textContent=found.length+' événement(s) trouvé(s)'+(shown.length<found.length?' — '+shown.length+' affiché(s)':'');
+  $('historyMoreBtn').hidden=shown.length>=found.length;
+  list.replaceChildren();
+  if(!found.length){const p=document.createElement('p');p.className='history-empty muted';p.textContent='Aucun événement pour ce filtre.';list.append(p);return}
+  const table=document.createElement('table');table.className='history-table';
+  const th=document.createElement('thead'),tr=document.createElement('tr');
+  for(const [name,cls] of [['Date','datecol'],['Type',''],['Compteur','numeric mobile-optional'],['Variation','numeric'],['Stock','numeric'],['Jauge','numeric optional'],['','']]){
+    const cell=document.createElement('th');cell.textContent=name;cell.className=cls;tr.append(cell);
+  }
+  th.append(tr);table.append(th);const body=document.createElement('tbody');
+  function textCell(row,value,css=''){
+    const cell=document.createElement('td');cell.className=css;cell.textContent=value;row.append(cell);return cell;
+  }
+  for(const e of shown){
+    const prev=e.type==='reading'?rs.filter(r=>r.when<e.when).at(-1):null;
+    const row=document.createElement('tr');row.className='kind-'+e.type+'-row';
+    textCell(row,dateText(e.when).replace('/2026','/26'),'datecol');
+    const kind=document.createElement('td'),pill=document.createElement('span');pill.className='pill '+eventKind[e.type][1];pill.textContent=eventKind[e.type][0];kind.append(pill);row.append(kind);
+    textCell(row,e.type==='reading'?fmt(e.meter)+' h':e.type==='rate'?fmt(e.meter)+' h':'—','numeric mobile-optional');
+    const fuel=e.type==='reading'?C.fuelBetween(data,prev?.when??data.baseDate,prev?.meter??data.baseMeter,e.when,e.meter):null;
+    textCell(row,e.type==='reading'?fmt(fuel.liters,2)+' L':e.type==='delivery'?'+'+fmt(e.liters,0)+' L':e.type==='anchor'?fmt(e.liters)+' L':fmt(e.rate,2)+' L/h','numeric');
+    textCell(row,e.when<data.baseDate?'—':fmt(C.stockAt(data,e.when).liters)+' L','numeric');
+    textCell(row,C.isNum(e.gauge)?fmt(e.gauge)+' cm':'—','numeric optional');
+    const control=document.createElement('td');const toggle=document.createElement('button');toggle.className='secondary small';toggle.textContent='Détails';toggle.type='button';toggle.setAttribute('aria-expanded','false');control.append(toggle);row.append(control);body.append(row);
+    const detailRow=document.createElement('tr');detailRow.className='history-details';detailRow.hidden=true;
+    const detailCell=document.createElement('td');detailCell.colSpan=7;
+    const area=document.createElement('div');area.className='detailgrid';
+    for(const [label,value] of eventDetails(e,prev)){
+      const box=document.createElement('div');box.className='detail';const a=document.createElement('span'),b=document.createElement('strong');a.textContent=label;b.textContent=value;box.append(a,b);area.append(box);
+    }
+    detailCell.append(area);const actions=document.createElement('div');actions.className='actions';
+    const edit=document.createElement('button');edit.className='secondary small';edit.textContent='Modifier';edit.type='button';edit.onclick=()=>editEvent(e);
+    const del=document.createElement('button');del.className='danger small';del.textContent='Supprimer';del.type='button';
+    del.onclick=()=>{if(confirm('Supprimer cet événement du tableau ET des données ? Les calculs seront recalculés.')){
+      const arr=e.type==='reading'?'readings':e.type==='delivery'?'deliveries':e.type==='rate'?'rateChanges':'anchors',next=C.clone(data);
+      next[arr]=next[arr].filter(x=>x.id!==e.id);
+      if(commit(next,'Événement supprimé de l’historique. Calculs actualisés.')){
+        if(lastSavedReadingId===e.id){lastSavedReadingId=null;$('readingConfirmation').hidden=true;}
+      }
+    }};
+    actions.append(edit,del);detailCell.append(actions);detailRow.append(detailCell);body.append(detailRow);
+    toggle.onclick=()=>{detailRow.hidden=!detailRow.hidden;row.classList.toggle('expanded',!detailRow.hidden);toggle.textContent=detailRow.hidden?'Détails':'Fermer';toggle.setAttribute('aria-expanded',String(!detailRow.hidden))};
+  }
+  table.append(body);list.append(table);
+}
+$('historyFilter').addEventListener('change',()=>{historyShowAll=false;renderHistory()});
+$('historyOrder').addEventListener('change',()=>{historyShowAll=false;renderHistory()});
+$('historySearch').addEventListener('input',()=>{historyShowAll=false;renderHistory()});
+$('historyMoreBtn').addEventListener('click',()=>{historyShowAll=true;renderHistory()});
+function showReadingConfirmation(id){
+  const r=data.readings.find(x=>x.id===id);if(!r)return;
+  lastSavedReadingId=id;
+  const rs=C.readings(data),prev=rs.filter(x=>x.when<r.when).at(-1);
+  const stock=C.stockAt(data,r.when),fuel=C.fuelBetween(data,prev?.when??data.baseDate,prev?.meter??data.baseMeter,r.when,r.meter);
+  const rows=[['Date',dateText(r.when)],['Compteur',fmt(r.meter)+' h'],['Jauge',C.isNum(r.gauge)?fmt(r.gauge)+' cm':'—'],['Consigne',fmt(r.temp)+' °C'],['Chauffage complémentaire',C.heatLabel(r)],['Consommation sur la période',fmt(fuel.liters,2)+' L'],['Stock théorique',fmt(stock.liters)+' L'],['Remarque',r.note||'—']];
+  const recap=$('readingRecap');recap.replaceChildren();
+  for(const [label,value] of rows){const a=document.createElement('span'),b=document.createElement('b');a.textContent=label;b.textContent=value;recap.append(a,b)}
+  $('readingConfirmation').hidden=false;
+  $('readingConfirmation').scrollIntoView({block:'nearest',behavior:'smooth'});
+}
+$('confirmationEdit').addEventListener('click',()=>{
+  const e=C.events(data).find(x=>x.id===lastSavedReadingId);if(e)editEvent(e);
+});
+$('confirmationClose').addEventListener('click',()=>{lastSavedReadingId=null;$('readingConfirmation').hidden=true});
+$('confirmationHistory').addEventListener('click',()=>{
+  $('historyFilter').value='reading';$('historySearch').value='';historyShowAll=false;showPage('historique');
+});
 function dateFieldValid(when){if(!C.dateOk(when)){message('Date/heure impossible ou incomplète.',true);return false}if(C.future(when)){message('Les dates ou heures futures sont interdites.',true);return false}return true}
 function numberValid(value,label,{min=0,strict=false}={}){
   const n=C.parseNum(value);
@@ -114,6 +196,16 @@ function editEvent(e){
       if(!C.isNum(gauge)||gauge<0){message('Jauge invalide : indique une valeur positive ou laisse le champ vide.',true);return}
       updated.gauge=gauge;
     }
+    const mode=prompt('Chauffage complémentaire : unknown (non renseigné) / none (aucun) / used (utilisé)',e.heatUse??'unknown');
+    if(mode===null)return;
+    const code=mode.trim().toLowerCase();
+    if(!['unknown','none','used'].includes(code)){message('Chauffage complémentaire : indique unknown, none ou used.',true);return}
+    updated.heatUse=code;updated.pellet=false;updated.wood=false;
+    if(code==='used'){
+      updated.pellet=confirm('Poêle à pellets utilisé pendant la période ?');
+      updated.wood=confirm('Feu ouvert utilisé pendant la période ?');
+      if(!updated.pellet&&!updated.wood){message('Indique au moins un chauffage complémentaire, ou sélectionne « aucun ».',true);return}
+    }
   }else if(e.type==='rate'){
     updated.rate=value;
     const meter=prompt('Compteur lors du changement de débit (vide = estimation)',C.isNum(e.meter)?String(e.meter):'');if(meter===null)return;
@@ -129,7 +221,7 @@ function editEvent(e){
     }
   }
   const next=C.clone(data);next[arr]=next[arr].map(x=>x.id===e.id?updated:x);
-  commit(next,'Événement corrigé.');
+  if(commit(next,'Événement corrigé.')&&lastSavedReadingId===e.id)showReadingConfirmation(e.id);
 }
 // Champs date/heure : valeur réellement à jour à chaque nouvelle saisie,
 // mais jamais remplacée automatiquement si l'utilisateur a choisi le passé.
@@ -149,13 +241,25 @@ for(const id of ['readingDate','anchorDate','deliveryDate','rateDate']){
   });
 }
 document.querySelectorAll('[data-date]').forEach(b=>b.addEventListener('click',()=>setNow(b.dataset.date)));
+function currentHeatUse(){return document.querySelector('input[name="heatUse"]:checked')?.value??'unknown'}
+function updateHeatTypes(){
+  const used=currentHeatUse()==='used';$('heatTypes').hidden=!used;
+  if(!used){$('heatPellet').checked=false;$('heatWood').checked=false}
+}
+document.querySelectorAll('input[name="heatUse"]').forEach(x=>x.addEventListener('change',updateHeatTypes));
 $('readingForm').onsubmit=e=>{
   e.preventDefault();const when=$('readingDate').value;if(!dateFieldValid(when))return;
   const meter=numberValid($('readingMeter').value,'Compteur'),temp=C.parseNum($('readingTemp').value);
   const raw=$('readingGauge').value.trim(),gauge=raw===''?null:C.parseNum(raw);
   if(meter===null||!C.isNum(temp)||(gauge!==null&&(!C.isNum(gauge)||gauge<0))){message('Vérifie le compteur, la consigne et la jauge.',true);return}
-  const next=C.clone(data);next.readings.push({id:uid(),when,meter,temp,gauge,note:$('readingNote').value.trim()});
-  if(commit(next,'Relevé enregistré.')){$('readingMeter').value=$('readingGauge').value=$('readingNote').value='';setNow('readingDate')}
+  const heatUse=currentHeatUse(),pellet=$('heatPellet').checked,wood=$('heatWood').checked;
+  if(heatUse==='used'&&!pellet&&!wood){message('Coche le poêle à pellets et/ou le feu ouvert, ou choisis « aucun ».',true);return}
+  const reading={id:uid(),when,meter,temp,gauge,heatUse,pellet:heatUse==='used'&&pellet,wood:heatUse==='used'&&wood,note:$('readingNote').value.trim()};
+  const next=C.clone(data);next.readings.push(reading);
+  if(commit(next,'Relevé enregistré.')){
+    $('readingMeter').value=$('readingGauge').value=$('readingNote').value='';setNow('readingDate');
+    $('heatUnknown').checked=true;updateHeatTypes();showReadingConfirmation(reading.id);
+  }
 };
 $('deliveryForm').onsubmit=e=>{
   e.preventDefault();const when=$('deliveryDate').value;if(!dateFieldValid(when))return;
@@ -185,6 +289,37 @@ $('anchorForm').onsubmit=e=>{
   const next=C.clone(data);next.anchors.push({id:uid(),when,liters,meter,note:$('anchorNote').value.trim()});next.initialStockProvisional=false;
   if(commit(next,'Stock de référence corrigé.')){$('anchorLiters').value=$('anchorMeter').value=$('anchorNote').value='';setNow('anchorDate')}
 };
+function tankValue(id,required=false){
+  const raw=$(id).value.trim();if(!raw&&!required)return null;
+  const n=C.parseNum(raw);if(!C.isNum(n)||n<=0)return NaN;return n;
+}
+function populateTankForm(){
+  const t=data.tank??{};
+  for(const [key,id] of [['capacity','tankCapacity'],['length','tankLength'],['width','tankWidth'],['height','tankHeight'],['diameter','tankDiameter']])
+    $(id).value=C.isNum(t[key])?String(t[key]):'';
+  $('tankShape').value=t.shape??'unknown';
+  $('tankFactor').value=String(t.litersPerCm??C.FACTOR);
+}
+$('tankForm').onsubmit=e=>{
+  e.preventDefault();
+  const tank={shape:$('tankShape').value};
+  for(const [key,id] of [['capacity','tankCapacity'],['length','tankLength'],['width','tankWidth'],['height','tankHeight'],['diameter','tankDiameter']]){
+    tank[key]=tankValue(id);
+    if(Number.isNaN(tank[key])){message('Dimensions : indique une valeur strictement positive ou laisse le champ vide.',true);return}
+  }
+  tank.litersPerCm=tankValue('tankFactor',true);
+  if(Number.isNaN(tank.litersPerCm)){message('Conversion de jauge : indique un nombre strictement positif.',true);return}
+  const next=C.clone(data);next.tank=tank;
+  if(commit(next,'Paramètres de cuve enregistrés. Aucune modification du stock théorique.'))populateTankForm();
+};
+const THEMEKEY=KEY+'-theme';
+try{const choice=localStorage.getItem(THEMEKEY);if(['clair','sombre','bronze','technique'].includes(choice))$('themeSelect').value=choice;}catch(_){}
+document.body.dataset.theme=$('themeSelect').value;
+$('themeSelect').addEventListener('change',()=>{
+  document.body.dataset.theme=$('themeSelect').value;
+  try{localStorage.setItem(THEMEKEY,$('themeSelect').value)}catch(_){}
+  message('Thème modifié sur cet appareil.');
+});
 function download(name,content,type){
   const url=URL.createObjectURL(new Blob([content],{type}));
   const a=document.createElement('a');a.href=url;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),10000);
@@ -192,18 +327,18 @@ function download(name,content,type){
 const cell=x=>'"'+String(x??'').replaceAll('"','""')+'"';
 $('csvBtn').onclick=()=>{
   const rs=C.readings(data);let prev=null;
-  const table=[['Type','Date','Compteur h','Fonctionnement h','Consommation L','Stock théorique L','Jauge cm','Jauge L','Consigne °C','Température du jour °C','Moyenne période °C','Livraison L','Correction stock L','Remarque','Débit actif L/h','Débit modifié L/h','Compteur au changement h']];
+  const table=[['Type','Date','Compteur h','Fonctionnement h','Consommation L','Stock théorique L','Jauge cm','Jauge L','Consigne °C','Température du jour °C','Moyenne période °C','Livraison L','Correction stock L','Remarque','Débit actif L/h','Débit modifié L/h','Compteur au changement h','Chauffage complémentaire','Poêle à pellets','Feu ouvert']];
   for(const e of C.events(data)){
     if(e.type==='reading'){
       const diff=e.meter-(prev?.meter??data.baseMeter),avg=C.periodAvg(data,prev?.when,e.when),s=C.stockAt(data,e.when);
       const fuel=C.fuelBetween(data,prev?.when??data.baseDate,prev?.meter??data.baseMeter,e.when,e.meter);
-      table.push(['Relevé',e.when,fmt(e.meter),fmt(diff),fmt(fuel.liters,2),fmt(s.liters,2),C.isNum(e.gauge)?fmt(e.gauge):'',C.isNum(e.gauge)?fmt(e.gauge*C.FACTOR):'',fmt(e.temp),C.isNum(C.dayAvg(data,e.when))?fmt(C.dayAvg(data,e.when)):'',C.isNum(avg)?fmt(avg):'','','',e.note||'',fmt(C.rateAt(data,e.when),2),'','']);prev=e;
-    }else table.push([e.type==='delivery'?'Livraison':e.type==='rate'?'Changement débit':'Correction',e.when,'','','',e.when<data.baseDate?'':fmt(C.stockAt(data,e.when).liters,2),'','','','','',e.type==='delivery'?fmt(e.liters):'',e.type==='anchor'?fmt(e.liters):'',e.note||'',fmt(C.rateAt(data,e.when),2),e.type==='rate'?fmt(e.rate,2):'',e.type==='rate'&&C.isNum(e.meter)?fmt(e.meter):'']);
+      table.push(['Relevé',e.when,fmt(e.meter),fmt(diff),fmt(fuel.liters,2),fmt(s.liters,2),C.isNum(e.gauge)?fmt(e.gauge):'',C.isNum(e.gauge)?fmt(e.gauge*C.FACTOR):'',fmt(e.temp),C.isNum(C.dayAvg(data,e.when))?fmt(C.dayAvg(data,e.when)):'',C.isNum(avg)?fmt(avg):'','','',e.note||'',fmt(C.rateAt(data,e.when),2),'','',C.heatLabel(e),e.heatUse==='used'&&e.pellet?'Oui':e.heatUse==='unknown'?'':'Non',e.heatUse==='used'&&e.wood?'Oui':e.heatUse==='unknown'?'':'Non']);prev=e;
+    }else table.push([e.type==='delivery'?'Livraison':e.type==='rate'?'Changement débit':'Correction',e.when,'','','',e.when<data.baseDate?'':fmt(C.stockAt(data,e.when).liters,2),'','','','','',e.type==='delivery'?fmt(e.liters):'',e.type==='anchor'?fmt(e.liters):'',e.note||'',fmt(C.rateAt(data,e.when),2),e.type==='rate'?fmt(e.rate,2):'',e.type==='rate'&&C.isNum(e.meter)?fmt(e.meter):'','','','']);
   }
-  download('ma-chaudiere-V03-etape1-TEST.csv','\ufeff'+table.map(r=>r.map(cell).join(';')).join('\r\n'),'text/csv;charset=utf-8');
+  download('ma-chaudiere-V03-etape2-TEST.csv','\ufeff'+table.map(r=>r.map(cell).join(';')).join('\r\n'),'text/csv;charset=utf-8');
   message('Export de test CSV demandé. Le nommage horodaté complet sera intégré à l’étape 3.');
 };
-$('backupBtn').onclick=()=>{download('ma-chaudiere-V03-etape1-TEST.json',JSON.stringify(data,null,2),'application/json');message('Sauvegarde JSON de test téléchargée.')};
+$('backupBtn').onclick=()=>{download('ma-chaudiere-V03-etape2-TEST.json',JSON.stringify(data,null,2),'application/json');message('Sauvegarde JSON de test téléchargée.')};
 $('restoreBtn').onclick=()=>$('restoreFile').click();
 $('restoreFile').onchange=async e=>{
   try{
@@ -214,7 +349,9 @@ $('restoreFile').onchange=async e=>{
     // Sauvegarde supplémentaire téléchargeable avant toute restauration ;
     // une copie est également conservée dans le navigateur.
     download('ma-chaudiere-etat-avant-restauration-V03-TEST.json',JSON.stringify(data,null,2),'application/json');
-    commit(C.normalize(candidate),'Sauvegarde importée dans la V0.3 de test. Copie de sécurité précédente créée.',true);
+    if(commit(C.normalize(candidate),'Sauvegarde importée dans la V0.3 de test. Copie de sécurité précédente créée.',true)){
+      populateTankForm();lastSavedReadingId=null;$('readingConfirmation').hidden=true;
+    }
   }catch(err){message('Restauration refusée, aucune donnée modifiée : '+err.message,true)}
   finally{e.target.value=''}
 };
@@ -233,21 +370,8 @@ $('weatherBtn').onclick=async()=>{
     if(commit(next,'Météo mise à jour.'))$('weatherStatus').textContent='Météo historique mise à jour.';
   }catch(err){$('weatherStatus').textContent='Météo indisponible : '+err.message}
 };
-// Restaurer le précédent état V0.3 de test si une action a été faite par erreur.
-const rollback=document.createElement('button');rollback.type='button';rollback.className='secondary';rollback.textContent='Annuler la dernière modification (test)';
-rollback.onclick=()=>{
-  try{
-    const raw=localStorage.getItem(PREVIOUS);if(!raw){message('Aucun état précédent à restaurer.',true);return}
-    const candidate=JSON.parse(raw),reason=C.validate(candidate);if(reason)throw Error(reason);
-    if(!confirm('Revenir à l’état avant la dernière modification enregistrée dans la V0.3 de test ?'))return;
-    // Faire l'échange des deux copies pour permettre un second retour arrière.
-    const current=localStorage.getItem(KEY);
-    localStorage.setItem(KEY,raw);
-    if(current)localStorage.setItem(PREVIOUS,current);
-    data=C.normalize(candidate);render();message('État précédent restauré (V0.3 de test uniquement).');
-  }catch(err){message('Impossible de rétablir l’état précédent : '+err.message,true)}
-};
-$('restoreBtn').insertAdjacentElement('afterend',rollback);
-render();
-if(!storageReady)message('Attention : anciennes données de test illisibles ou stockage indisponible. Ne modifie rien avant une vérification.',true);
+// La suppression d'un événement s'effectue désormais depuis l'Historique.
+// Le bouton global d'annulation a été retiré pour éviter le rétablissement involontaire d'une opération.
+populateTankForm();updateHeatTypes();render();
+if(!storageReady)message('Attention : données de test illisibles ou stockage indisponible. Ne modifie rien avant une vérification.',true);
 if('serviceWorker'in navigator&&location.protocol.startsWith('http'))navigator.serviceWorker.register('./sw.js').catch(()=>{});

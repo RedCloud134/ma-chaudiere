@@ -1,53 +1,47 @@
-MA CHAUDIÈRE — V0.3 / ÉTAPE 1B — VERSION DE TEST
+Ma Chaudière — V0.3 Étape 2 TEST (2026-11-07)
 ================================================
 
-RAPPEL : NE PAS REMPLACER LA V0.2 PUBLIÉE À LA RACINE DU DÉPÔT.
-Remplacer uniquement les fichiers placés dans le sous-dossier GitHub test-v03/.
+Cette archive remplace UNIQUEMENT les fichiers du dossier test-v03
+sur GitHub Pages. Ne pas modifier les fichiers à la racine du dépôt :
+ils forment la V0.2 actuellement utilisée.
 
-CE QUE CONTIENT CETTE ÉTAPE 1B
-- Correctif d'édition des relevés : ajout, changement ou effacement d'une jauge.
-- Gestion d'un CHANGEMENT DE DÉBIT du brûleur avec date, compteur facultatif,
-  nouveau débit en litres/heure et motif.
-- Historique modifiable et suppressible des changements de débit.
-- Calcul de consommation par intervalles, chacun au débit qui y était actif.
-- Conservation des anciens débits dans les calculs rétrospectifs.
-- Compteur manquant au changement de débit = répartition estimée, clairement signalée.
-- Maintien des relevés, livraisons, corrections de stock, export CSV, météo et JSON.
-- Correction de la première annulation : état initial sauvegardé avant la première action.
-- Gestion du cache hors ligne isolée à /test-v03/ (nouvelle version du cache).
+Nouveautés de l'étape 2 :
+- Trois pages : Accueil, Historique et Réglages.
+- Historique condensé, filtrable, recherche et détails modifiables.
+- Code couleur bleu/relevés, vert/livraisons, orange/corrections,
+  violet/réglages de débit.
+- Tableau récapitulatif après ajout d'un relevé et accès à sa modification.
+- Usage du poêle à pellets et/ou du feu ouvert associé à chaque période.
+- Capacité, type et dimensions de cuve facultatifs. Jauge de réserve
+  proportionnelle au stock théorique si la capacité est connue.
+- Thèmes : Clair, Sombre, Bronze et Technique.
+- Suppression du bouton « Annuler la dernière modification ».
 
-STOCKAGE ET COMPATIBILITÉ
-Clé inchangée : chaudiere-hornu-v03-test-etape1.
-Une V0.3 étape 1B récupère automatiquement l'état local de la V0.3 étape 1,
-sur le même navigateur et la même adresse. Aucune restauration nécessaire.
-La sauvegarde V0.2 (JSON version 2) reste IMPORTABLE dans la V0.3.
-Les propriétés nouvelles «baseRate» (débit initial = 4.2) et «rateChanges»
-(liste des événements) sont ajoutées lors de la migration ; les anciennes
-lignes de relevés sont conservées.
-Une fois exporté avec les nouveaux champs, ce JSON V0.3 n'est PAS destiné
-à être restauré dans la V0.2. Continuer les relevés réels dans la V0.2.
+Le moteur de calcul de l'étape 1B reste inchangé pour les relevés,
+corrections, livraisons et changements de débit.
 
-EXEMPLE DE CONTRÔLE À EFFECTUER DANS /test-v03/ UNIQUEMENT
-- Sur un jeu d'essai : compteur initial 794 h, stock 920 L, débit 4.2 L/h.
-- Relevé 795 h : consommation 4.20 L, stock 915.80 L.
-- Changement de débit à 4.5 L/h au compteur 795 h.
-- Relevé 796 h : consommation totale 8.70 L, stock 911.30 L.
-- Corriger une jauge d'un relevé : le stock théorique NE doit pas changer.
-- Tester Annuler dernière modification / Sauvegarder JSON / Restaurer JSON.
+Compatibilité :
+- Importation des JSON V0.2 et V0.3 antérieurs.
+- Les relevés anciens n'ayant pas de marqueur de chauffage complémentaire
+  sont considérés comme « non renseigné » (pas « aucun »).
+- Le stockage local V0.3 continue avec sa clé précédente ; une mise à jour
+  des fichiers ne devrait pas effacer les relevés du navigateur.
+- Les champs de cuve ne recalculent PAS le stock historique : seule la jauge
+  visuelle en pourcentage et la conversion indicative sont concernés.
 
-PRÉCAUTIONS
-Toujours télécharger une sauvegarde JSON avant de remplacer la version de test.
-Aucune écriture vers la V0.2 ; aucune synchronisation ni partage automatique.
-Le débit reste une estimation basée sur les informations du brûleur : un
-changement de pression ne fournit pas à lui seul le nouveau débit réel.
-Lors d'une saisie sans compteur mesuré, la répartition des heures repose
-sur une approximation temporelle (et est signalée par ≈).
+Précautions :
+- Sauvegarder un JSON avant toute installation ou restauration.
+- Tester uniquement sur /test-v03/ ; ne pas déposer de JSON privés sur GitHub.
+- Pas de synchronisation automatique (prévue pour V0.3.1).
+- Pas encore de partage Android ni d'export météo enrichi (étape 3).
 
-V0.3 ÉTAPE 2 (NON ENCORE FAITE)
-Réorganisation Accueil / Historique / Réglages, code couleur distinct,
-tableau d'historique, résumé après relevé, utilisation bois/pellets, thèmes,
-paramètres de cuve et jauge verticale.
-V0.3 ÉTAPE 3 (NON ENCORE FAITE)
-Météo détaillée, exports horodatés, partage Android.
-V0.3.1 (PLUS TARD)
-Synchronisation des appareils.
+Tests suggérés :
+1. Actualiser la page et vérifier la conservation des données existantes.
+2. Ajouter un relevé fictif et vérifier le résumé ; puis corriger sa jauge.
+3. Filtrer et chercher dans le tableau, modifier, supprimer un événement.
+4. Vérifier que la suppression retire l'événement ET recalcule le stock.
+5. Tester « non renseigné » / « aucun » / poêle / feu ouvert dans le CSV/JSON.
+6. Renseigner une capacité de cuve, vérifier la jauge %, changer le thème.
+7. Exporter un JSON et le restaurer dans la V0.3 de test.
+
+La V0.2 publiée reste la version à utiliser pour les vrais relevés.
