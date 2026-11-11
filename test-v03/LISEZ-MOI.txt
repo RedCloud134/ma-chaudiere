@@ -1,47 +1,28 @@
-Ma Chaudière — V0.3 Étape 2 TEST (2026-11-07)
-================================================
+Ma Chaudière — V0.3 Quotidienne (2026-11-11)
+=========================================
 
-Cette archive remplace UNIQUEMENT les fichiers du dossier test-v03
-sur GitHub Pages. Ne pas modifier les fichiers à la racine du dépôt :
-ils forment la V0.2 actuellement utilisée.
+Cette archive remplace les fichiers du dossier test-v03 sur GitHub Pages.
 
-Nouveautés de l'étape 2 :
-- Trois pages : Accueil, Historique et Réglages.
-- Historique condensé, filtrable, recherche et détails modifiables.
-- Code couleur bleu/relevés, vert/livraisons, orange/corrections,
-  violet/réglages de débit.
-- Tableau récapitulatif après ajout d'un relevé et accès à sa modification.
-- Usage du poêle à pellets et/ou du feu ouvert associé à chaque période.
-- Capacité, type et dimensions de cuve facultatifs. Jauge de réserve
-  proportionnelle au stock théorique si la capacité est connue.
-- Thèmes : Clair, Sombre, Bronze et Technique.
-- Suppression du bouton « Annuler la dernière modification ».
+Objectif de cette version :
+- conserver le moteur de calcul actuellement validé ;
+- proposer une présentation suffisamment propre pour un usage quotidien ;
+- garder les fonctions utiles : relevés, livraisons, corrections, débit,
+  historique, sauvegarde/restauration JSON et export CSV.
 
-Le moteur de calcul de l'étape 1B reste inchangé pour les relevés,
-corrections, livraisons et changements de débit.
+Améliorations principales :
+- Habillage plus "terrain" pour un usage courant.
+- Thème Bronze par défaut.
+- Jauge de réserve avec seuil visuel de commande mazout.
+- Couleur dynamique de la jauge :
+  * vert si réserve >= 50 %
+  * orange si réserve < 50 %
+  * rouge si stock <= 350 L
+- Message d’état adapté à une utilisation quotidienne.
 
 Compatibilité :
-- Importation des JSON V0.2 et V0.3 antérieurs.
-- Les relevés anciens n'ayant pas de marqueur de chauffage complémentaire
-  sont considérés comme « non renseigné » (pas « aucun »).
-- Le stockage local V0.3 continue avec sa clé précédente ; une mise à jour
-  des fichiers ne devrait pas effacer les relevés du navigateur.
-- Les champs de cuve ne recalculent PAS le stock historique : seule la jauge
-  visuelle en pourcentage et la conversion indicative sont concernés.
+- Le stockage local V0.3 déjà présent dans le navigateur est conservé.
+- Import JSON V0.2 / V0.3 toujours accepté si valide.
+- La V0.2 reste séparée.
 
-Précautions :
-- Sauvegarder un JSON avant toute installation ou restauration.
-- Tester uniquement sur /test-v03/ ; ne pas déposer de JSON privés sur GitHub.
-- Pas de synchronisation automatique (prévue pour V0.3.1).
-- Pas encore de partage Android ni d'export météo enrichi (étape 3).
-
-Tests suggérés :
-1. Actualiser la page et vérifier la conservation des données existantes.
-2. Ajouter un relevé fictif et vérifier le résumé ; puis corriger sa jauge.
-3. Filtrer et chercher dans le tableau, modifier, supprimer un événement.
-4. Vérifier que la suppression retire l'événement ET recalcule le stock.
-5. Tester « non renseigné » / « aucun » / poêle / feu ouvert dans le CSV/JSON.
-6. Renseigner une capacité de cuve, vérifier la jauge %, changer le thème.
-7. Exporter un JSON et le restaurer dans la V0.3 de test.
-
-La V0.2 publiée reste la version à utiliser pour les vrais relevés.
+Conseil :
+- faire une sauvegarde JSON régulière, surtout avant une série d’essais.

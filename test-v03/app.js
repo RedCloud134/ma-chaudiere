@@ -49,13 +49,45 @@ function render(){
   $('setpoint').textContent=fmt(lastTemp)+' °C';
   if(document.activeElement!==$('readingTemp'))$('readingTemp').value=fmt(lastTemp);
   const cap=data.tank?.capacity;
+  const orderThreshold=350;
+  const track=$('tankTrack'), fill=$('tankFill'), order=$('tankOrder');
   if(C.isNum(cap)&&cap>0){
     const percentage=100*stock.liters/cap;
+    const clipped=Math.max(0,Math.min(100,percentage));
     $('tankPct').textContent=fmt(percentage,0)+' %';
     $('tankHelp').textContent='Capacité : '+fmt(cap,0)+' L'+(percentage>100?' (stock au-dessus de la capacité)':'');
-    $('tankFill').style.height=Math.max(0,Math.min(100,percentage))+'%';
+    fill.style.height=clipped+'%';
+    if(stock.liters<=orderThreshold){
+      fill.style.background='linear-gradient(0deg,#b73a3a,#eb8b8b)';
+      $('tankState').textContent='Commander du mazout';
+      $('tankState').className='tank-state critical';
+    }else if(percentage<50){
+      fill.style.background='linear-gradient(0deg,#d88818,#f2c46e)';
+      $('tankState').textContent='Niveau de vigilance';
+      $('tankState').className='tank-state warn';
+    }else{
+      fill.style.background='linear-gradient(0deg,#2b8758,#85cf9f)';
+      $('tankState').textContent='Réserve confortable';
+      $('tankState').className='tank-state good';
+    }
+    if(orderThreshold<cap){
+      const pos=Math.max(0,Math.min(100,orderThreshold/cap*100));
+      order.style.bottom=pos+'%';
+      track.classList.add('order-visible');
+      $('tankOrderLabel').textContent='Trait rouge : seuil de commande ('+fmt(orderThreshold,0)+' L)';
+    }else{
+      track.classList.remove('order-visible');
+      $('tankOrderLabel').textContent='Seuil de commande supérieur à la capacité';
+    }
   }else{
-    $('tankPct').textContent='— %';$('tankHelp').textContent='Capacité à renseigner dans Réglages';$('tankFill').style.height='0%';
+    $('tankPct').textContent='— %';
+    $('tankHelp').textContent='Capacité à renseigner dans Réglages';
+    fill.style.height='0%';
+    fill.style.background='linear-gradient(0deg,#157b92,#70bbce)';
+    $('tankState').textContent='';
+    $('tankState').className='tank-state';
+    track.classList.remove('order-visible');
+    $('tankOrderLabel').textContent='Seuil commande : 350 L';
   }
   const approximate=data.anchors.some(a=>a.meter==null&&C.meterAt(data,a.when).estimated)||C.rateChanges(data).some(a=>a.meter==null&&C.meterAt(data,a.when).estimated);
   $('calcNotice').textContent=approximate?'⚠ Un compteur manque lors d’une correction ou d’un changement de débit : les calculs concernés sont approximatifs.':'Consommations calculées selon l’historique des débits et les compteurs renseignés.';
@@ -335,21 +367,21 @@ $('csvBtn').onclick=()=>{
       table.push(['Relevé',e.when,fmt(e.meter),fmt(diff),fmt(fuel.liters,2),fmt(s.liters,2),C.isNum(e.gauge)?fmt(e.gauge):'',C.isNum(e.gauge)?fmt(e.gauge*C.FACTOR):'',fmt(e.temp),C.isNum(C.dayAvg(data,e.when))?fmt(C.dayAvg(data,e.when)):'',C.isNum(avg)?fmt(avg):'','','',e.note||'',fmt(C.rateAt(data,e.when),2),'','',C.heatLabel(e),e.heatUse==='used'&&e.pellet?'Oui':e.heatUse==='unknown'?'':'Non',e.heatUse==='used'&&e.wood?'Oui':e.heatUse==='unknown'?'':'Non']);prev=e;
     }else table.push([e.type==='delivery'?'Livraison':e.type==='rate'?'Changement débit':'Correction',e.when,'','','',e.when<data.baseDate?'':fmt(C.stockAt(data,e.when).liters,2),'','','','','',e.type==='delivery'?fmt(e.liters):'',e.type==='anchor'?fmt(e.liters):'',e.note||'',fmt(C.rateAt(data,e.when),2),e.type==='rate'?fmt(e.rate,2):'',e.type==='rate'&&C.isNum(e.meter)?fmt(e.meter):'','','','']);
   }
-  download('ma-chaudiere-V03-etape2-TEST.csv','\ufeff'+table.map(r=>r.map(cell).join(';')).join('\r\n'),'text/csv;charset=utf-8');
+  download('ma-chaudiere-V03-quotidienne.csv','\ufeff'+table.map(r=>r.map(cell).join(';')).join('\r\n'),'text/csv;charset=utf-8');
   message('Export de test CSV demandé. Le nommage horodaté complet sera intégré à l’étape 3.');
 };
-$('backupBtn').onclick=()=>{download('ma-chaudiere-V03-etape2-TEST.json',JSON.stringify(data,null,2),'application/json');message('Sauvegarde JSON de test téléchargée.')};
+$('backupBtn').onclick=()=>{download('ma-chaudiere-V03-quotidienne.json',JSON.stringify(data,null,2),'application/json');message('Sauvegarde JSON téléchargée.')};
 $('restoreBtn').onclick=()=>$('restoreFile').click();
 $('restoreFile').onchange=async e=>{
   try{
     const f=e.target.files[0];if(!f)return;
     const candidate=JSON.parse(await f.text()),reason=C.validate(candidate);
     if(reason)throw Error(reason);
-    if(!confirm('Importer cette sauvegarde dans la V0.3 DE TEST ? Le contenu actuel de la V0.3 de test sera remplacé. La V0.2 ne sera pas modifiée.'))return;
+    if(!confirm('Importer cette sauvegarde dans la V0.3 quotidienne ? Le contenu actuel sera remplacé. La V0.2 ne sera pas modifiée.'))return;
     // Sauvegarde supplémentaire téléchargeable avant toute restauration ;
     // une copie est également conservée dans le navigateur.
-    download('ma-chaudiere-etat-avant-restauration-V03-TEST.json',JSON.stringify(data,null,2),'application/json');
-    if(commit(C.normalize(candidate),'Sauvegarde importée dans la V0.3 de test. Copie de sécurité précédente créée.',true)){
+    download('ma-chaudiere-etat-avant-restauration-V03-quotidienne.json',JSON.stringify(data,null,2),'application/json');
+    if(commit(C.normalize(candidate),'Sauvegarde importée dans la V0.3 quotidienne. Copie de sécurité précédente créée.',true)){
       populateTankForm();lastSavedReadingId=null;$('readingConfirmation').hidden=true;
     }
   }catch(err){message('Restauration refusée, aucune donnée modifiée : '+err.message,true)}
