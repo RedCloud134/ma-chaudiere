@@ -120,7 +120,31 @@ function renderDashDetails(rs,last,stock,total){
   const status=stock.liters<=350?'Commande mazout conseillée':pct===null?'Capacité à renseigner':pct>100?'Stock supérieur à la capacité : à vérifier':pct<50?'Niveau à surveiller':'Réserve confortable';
   const state=stock.liters<=350?'critical':pct===null?'':pct>100||pct<50?'warn':'good';
   $('levelAlert').textContent=status;$('levelAlert').className='level-alert '+state;
-  $('heroGauge').textContent=C.isNum(last?.gauge)?fmt(last.gauge)+' cm':'— cm';
+  // Jauge numérique : la dernière mesure réelle est la valeur principale
+  // UNIQUEMENT si elle figure sur le dernier relevé et si aucune livraison
+  // ou correction du stock n'est intervenue après cette mesure.
+  // Sinon, estimation indicative = stock théorique / conversion L/cm.
+  // Aucune estimation n'est enregistrée en tant que mesure réelle.
+  const lastMeasuredGauge=rs.filter(r=>C.isNum(r.gauge)).at(-1);
+  const newerStockEvent=C.events(data).some(e=>
+    (e.type==='delivery'||e.type==='anchor')&&e.when>last?.when
+  );
+  const validRecentMeasure=!!last&&C.isNum(last.gauge)&&!newerStockEvent;
+  const factor=C.litersPerCm(data);
+  const estimate=C.isNum(factor)&&factor>0&&C.isNum(stock.liters)&&stock.liters>=0
+    ?stock.liters/factor:null;
+  const display=validRecentMeasure?last.gauge:estimate;
+  // Éviter les décimales superflues dans une valeur directement lue.
+  const formatCm=value=>Number.isInteger(value)?fmt(value,0):fmt(value,1);
+  $('heroGauge').textContent=C.isNum(display)?formatCm(display)+' cm':'— cm';
+  $('heroGaugeSource').textContent=validRecentMeasure
+    ?'Mesurée lors du dernier relevé'
+    :C.isNum(estimate)?'Estimée depuis le stock théorique':'Estimation indisponible';
+  $('heroGaugeSource').className='gauge-source'+(validRecentMeasure?' measured':'');
+  $('heroGaugeFactor').textContent=C.isNum(factor)?formatCm(factor)+' L/cm':'—';
+  $('heroGaugeDate').textContent=lastMeasuredGauge
+    ?'Dernière mesure réelle : '+formatCm(lastMeasuredGauge.gauge)+' cm le '+dateText(lastMeasuredGauge.when)
+    :'Dernière mesure réelle : aucune';
   $('lastWhen').textContent=last?dateText(last.when):'Aucun relevé';
   $('lastMeter').textContent=last?fmt(last.meter)+' h':'—';
   $('lastGauge').textContent=C.isNum(last?.gauge)?fmt(last.gauge)+' cm':'Non mesurée';

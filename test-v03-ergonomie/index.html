@@ -62,6 +62,16 @@ header .subtitle{font-size:.82rem;margin:0 0 17px}
 .hero-extra{border-left:1px solid var(--line);padding:8px 0 8px 18px;display:grid;gap:11px}
 .hero-reading{background:var(--secondary);border-radius:12px;padding:13px;display:grid;gap:4px}
 .hero-reading strong{font-size:2rem;line-height:1.1}.hero-reading span{font-size:.78rem;color:var(--muted)}
+/* Bloc numérique (pas de cadran imprécis) */
+.hero-extra{align-content:center;gap:9px}
+.hero-reading{padding:16px 18px;gap:11px;background:var(--secondary)}
+.hero-reading #heroGauge{display:block;font-size:clamp(2.4rem,4vw,3.25rem);line-height:1.02;letter-spacing:-.045em;font-variant-numeric:tabular-nums;color:var(--heading)}
+.gauge-source{display:inline-block;width:fit-content;max-width:100%;border-radius:22px;padding:7px 11px;background:var(--orangeBg);color:var(--orange);font-size:.79rem;font-weight:750;line-height:1.3}
+.gauge-source.measured{background:var(--greenBg);color:var(--green)}
+.gauge-reading-meta{font-size:.82rem;color:var(--muted);line-height:1.35}
+.gauge-reading-meta strong{font-size:inherit;color:var(--ink);font-weight:750}
+.gauge-legend{font-size:.78rem;display:flex;align-items:center;gap:7px}
+
 .hero-key{font-size:.79rem;display:flex;align-items:center;gap:7px}
 .dot{display:inline-block;flex:0 0 11px;width:11px;height:11px;border-radius:3px}.dot.good{background:#43a667}.dot.warn{background:#ed9e35}.dot.critical{background:#bc4545}
 .hero-extra .tank-state{font-weight:750;font-size:.95rem;margin-top:3px}
@@ -112,10 +122,16 @@ header .subtitle{font-size:.82rem;margin:0 0 17px}
       <div class="gauge-stat"><strong id="tankPct">— %</strong><div id="tankHelp">Capacité à renseigner dans Réglages</div><div id="tankOrderLabel">Trait : commande à 350 L</div></div>
     </div>
     <div class="hero-extra">
-      <div class="hero-reading"><div class="eyebrow">📏 Jauge mécanique</div><strong id="heroGauge">— cm</strong><span>Dernière lecture en cave</span></div>
-      <div class="hero-key"><span class="dot good"></span> Confortable : au moins 50 %</div>
-      <div class="hero-key"><span class="dot warn"></span> À surveiller : moins de 50 %</div>
-      <div class="hero-key"><span class="dot critical"></span> Commander : 350 L ou moins</div>
+      <div class="hero-reading" aria-label="Indication en centimètres de la jauge de cuve">
+        <div class="eyebrow">📏 Jauge mécanique</div>
+        <strong id="heroGauge">— cm</strong>
+        <div id="heroGaugeSource" class="gauge-source" aria-live="polite">Calcul en cours…</div>
+        <div class="gauge-reading-meta">Conversion indicative : <strong id="heroGaugeFactor">20 L/cm</strong></div>
+        <div class="gauge-reading-meta" id="heroGaugeDate">Dernière mesure réelle : —</div>
+      </div>
+      <div class="gauge-legend"><span class="dot good"></span> Confortable : au moins 50 %</div>
+      <div class="gauge-legend"><span class="dot warn"></span> À surveiller : moins de 50 %</div>
+      <div class="gauge-legend"><span class="dot critical"></span> Commander : 350 L ou moins</div>
       <div class="tank-state" id="tankState">—</div>
     </div>
   </div>

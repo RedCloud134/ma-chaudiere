@@ -25,3 +25,28 @@ Améliorations de présentation :
 
 Cette version reste expérimentale : elle doit être testée avant d'être adoptée
 comme version quotidienne. Sauvegarde JSON recommandée avant tout essai.
+
+CORRECTIF 11/11/2026 — LECTURE JAUGE MÉCANIQUE
+------------------------------------------------
+Le tableau de bord affiche désormais la dernière mesure de jauge disponible,
+avec la date et l'heure de sa lecture, même si les derniers relevés de
+compteur n'ont pas de valeur de jauge.
+La fiche « Dernier relevé » continue d'indiquer « Non mesurée » si ce relevé
+n'avait pas sa propre mesure. Le moteur core.js et la clé de stockage restent
+inchangés. Le cache de l'application passe à la version 2.
+
+CORRECTIF 11/11/2026 — JAUGE NUMÉRIQUE (V3)
+------------------------------------------------
+- Plus de proposition de cadran analogique, pour éviter une lecture trompeuse.
+- Si le dernier relevé comporte une vraie mesure de jauge, et qu'aucune
+  livraison/correction de stock n'est intervenue depuis : afficher cette mesure.
+- Sinon, afficher une ESTIMATION : stock théorique / conversion L/cm.
+- Toujours identifier la valeur comme « Mesurée » ou « Estimée ».
+- Afficher en dessous la dernière mesure réelle disponible, avec sa date,
+  pour qu'une ancienne lecture ne soit jamais confondue avec le stock actuel.
+- La règle n'ajoute aucun événement et ne modifie aucun calcul ni aucune
+  sauvegarde. Clé du stockage V0.3 Ergonomie conservée.
+- Cache de l'application : version 3.
+
+Mise à jour de ce dossier déjà existant sur GitHub : ouvrir /test-v03-ergonomie/
+puis importer UNIQUEMENT les fichiers de ce dossier (pas le dossier lui-même).
