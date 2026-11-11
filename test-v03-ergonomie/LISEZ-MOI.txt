@@ -1,0 +1,27 @@
+Ma Chaudière — V0.3 ERGONOMIE TEST (11 novembre 2026)
+=======================================================
+
+Cette archive sert à créer UN NOUVEAU DOSSIER test-v03-ergonomie à la racine du
+même dépôt GitHub que la version quotidienne. NE PAS remplacer test-v03.
+
+IMPORTANT :
+- Les données sont volontairement séparées : un relevé dans cette version
+  N'EST PAS enregistré dans la V0.3 quotidienne.
+- Pour importer une copie :
+  1. Dans test-v03 (quotidienne), enregistrer une sauvegarde JSON.
+  2. Dans test-v03-ergonomie, aller à Réglages > Restaurer JSON.
+  3. Choisir la copie JSON, vérifier les relevés et les calculs.
+- Éviter de saisir de vrais relevés différents dans les deux versions,
+  puisqu'il n'y a pas de synchronisation automatique.
+
+Améliorations de présentation :
+- Grand tableau de bord avec stock, jauge verticale et lecture mécanique en cm.
+- Alerte de réserve vert / orange / rouge et trait de commande à 350 L.
+- Indicateurs compacts, consommation depuis dernier relevé.
+- Dernier relevé, chauffage complémentaire, graphique des intervalles.
+- Raccourcis vers la saisie, les livraisons, les corrections et les réglages.
+- Quatrième page Statistiques light (indicateurs de base et graphique réels).
+- Historique et formulaires V0.3 préservés ; moteur de calcul core.js inchangé.
+
+Cette version reste expérimentale : elle doit être testée avant d'être adoptée
+comme version quotidienne. Sauvegarde JSON recommandée avant tout essai.

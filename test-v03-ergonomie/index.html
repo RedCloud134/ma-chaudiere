@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#173b4b">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icon.svg">
+  <title>Ma Chaudière · Ergonomie TEST</title>
+  <style>
+    :root{font-family:system-ui,-apple-system,"Segoe UI",sans-serif; color-scheme:light;
+      --bg:#edf3f5;--paper:#fff;--ink:#153745;--muted:#5c7580;--line:#d9e4e8;--heading:#173b4b;--header:#183d4e;
+      --primary:#156b76;--primaryText:#fff;--secondary:#e9f1f3;--shadow:0 2px 12px #122e3b0e;
+      --blue:#226aae;--blueBg:#e9f3ff;--green:#21764b;--greenBg:#e6f6ec;--orange:#af6a1c;--orangeBg:#fff2e0;--violet:#7356a9;--violetBg:#f1edfa;
+      --danger:#9a3a3a;--dangerBg:#fff0ed;
+    }
+    body[data-theme="sombre"]{color-scheme:dark;--bg:#17242d;--paper:#23343e;--ink:#eef4f6;--muted:#b8cbd2;--line:#425864;--heading:#eaf3f8;--header:#0f2430;--primary:#7ad0cf;--primaryText:#112b34;--secondary:#354b55;--shadow:0 2px 15px #0003;--blue:#91c6f7;--blueBg:#274156;--green:#91ddad;--greenBg:#25493c;--orange:#f6c27f;--orangeBg:#50432f;--violet:#c6b3ef;--violetBg:#413650;--danger:#faacac;--dangerBg:#493538}
+    body[data-theme="bronze"]{--bg:#f4efe8;--paper:#fffaf3;--ink:#432f24;--muted:#765d50;--line:#e6d9cb;--heading:#513929;--header:#624633;--primary:#99602b;--secondary:#f0e6d9;--blue:#356e9a;--blueBg:#e9eff7;--green:#3b7d4d;--greenBg:#edf5e8;--orange:#a65e14;--orangeBg:#fae8d1;--violet:#795594;--violetBg:#f1eaf6}
+    body[data-theme="technique"]{--bg:#edf2f4;--paper:#fff;--ink:#172b34;--muted:#506877;--line:#bacbd4;--heading:#153b52;--header:#14425a;--primary:#076ba4;--secondary:#e3eef3;--shadow:none;--blue:#0067a6;--blueBg:#e6f1fa;--green:#047c55;--greenBg:#e4f4ec;--orange:#ae5c04;--orangeBg:#fff0de;--violet:#5b4caa;--violetBg:#edeafb}
+    *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-size:15px}body *{min-width:0}
+    header{background:var(--header);color:#fff;padding:19px 18px 0}header .wrap,main{max-width:1080px;margin:auto}h1{font-size:1.55rem;margin:0 0 4px}h2{font-size:1.18rem;margin:0 0 12px}h3{font-size:1rem;margin:0 0 8px}p{line-height:1.5}
+    .subtitle{font-size:.92rem;opacity:.92;margin:0 0 17px}.tabs{display:flex;gap:7px;flex-wrap:wrap}.tab{border:0;border-radius:10px 10px 0 0;background:#ffffff23;color:#fff;padding:12px 19px;font-weight:700;cursor:pointer}.tab[aria-current="page"]{background:var(--bg);color:var(--ink)}
+    main{padding:19px 14px 42px}.page[hidden],[hidden]{display:none!important}.section-title{display:flex;justify-content:space-between;align-items:center;gap:9px;flex-wrap:wrap}
+    .cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:11px;margin-bottom:15px}.card,.panel,.event{background:var(--paper);border-radius:15px;padding:18px;box-shadow:var(--shadow)}.card small{display:block;color:var(--muted);margin-bottom:5px}.card strong{font-size:clamp(1.2rem,3vw,1.65rem)}
+    .panel{margin-bottom:16px}.section-blue{border-top:5px solid var(--blue)}.section-green{border-top:5px solid var(--green)}.section-orange{border-top:5px solid var(--orange)}.section-violet{border-top:5px solid var(--violet)}.section-blue h2{color:var(--blue)}.section-green h2{color:var(--green)}.section-orange h2{color:var(--orange)}.section-violet h2{color:var(--violet)}
+    .pill{display:inline-flex;align-items:center;gap:4px;font-weight:700;font-size:.76rem;padding:4px 9px;border-radius:999px;white-space:nowrap}.kind-reading{background:var(--blueBg);color:var(--blue)}.kind-delivery{background:var(--greenBg);color:var(--green)}.kind-anchor{background:var(--orangeBg);color:var(--orange)}.kind-rate{background:var(--violetBg);color:var(--violet)}
+    .notice{background:var(--secondary);padding:12px 15px;border-radius:10px;margin:10px 0 19px}.notice.error{background:var(--dangerBg);color:var(--danger)}.muted,.hint{color:var(--muted)}.hint{font-size:.83rem}.warning{color:var(--orange)}
+    form{display:grid;gap:12px}.fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px}label{display:grid;gap:5px;font-weight:650;font-size:.91rem}input,textarea,select,button{font:inherit}input,textarea,select{color:var(--ink);width:100%;padding:10px;border:1px solid var(--line);border-radius:9px;background:var(--paper)}input:focus,button:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--primary);outline-offset:2px}button{border:none;border-radius:9px;padding:10px 14px;background:var(--primary);color:var(--primaryText);font-weight:700;cursor:pointer}button.secondary{background:var(--secondary);color:var(--ink)}button.danger{background:#913b3b;color:#fff}button.small{font-size:.85rem;padding:6px 10px}button:disabled{opacity:.5;cursor:not-allowed}.actions{display:flex;gap:8px;flex-wrap:wrap}.field-with-now{display:grid;align-content:start;gap:5px}.now-btn{padding:6px 9px;font-size:.78rem}
+    .choices{border:1px solid var(--line);border-radius:10px;padding:12px;margin:0}.choices legend{font-weight:700;padding:0 5px}.choice-row{display:flex;align-items:center;gap:7px;font-weight:500;margin:6px 0}.choice-row input{width:auto;accent-color:var(--primary)}.check-pair{display:flex;gap:20px;flex-wrap:wrap;margin-top:5px}
+    .gauge-layout{display:flex;gap:15px;align-items:center}.tank-track{position:relative;width:52px;height:156px;border:2px solid var(--line);border-radius:12px;background:var(--secondary);overflow:hidden;flex-shrink:0}.tank-fill{position:absolute;bottom:0;left:0;right:0;background:linear-gradient(0deg,#157b92,#70bbce);height:0%;transition:height .25s,background .25s}.tank-order{position:absolute;left:-2px;right:-2px;height:3px;background:#6a1f1f;box-shadow:0 0 0 1px #fff8;display:none}.tank-track.order-visible .tank-order{display:block}.tank-mark{position:absolute;left:0;right:0;height:1px;background:var(--paper);opacity:.7}.tank-mark.top{top:25%}.tank-mark.mid{top:50%}.tank-mark.bottom{top:75%}.tank-label{font-size:.85rem;line-height:1.55}.tank-percent{font-size:1.45rem;font-weight:750}.tank-state{font-weight:700;margin-top:3px}.tank-state.good{color:#24704b}.tank-state.warn{color:#af6a1c}.tank-state.critical{color:#9a3a3a}.gauge-layout .card{box-shadow:none}
+    .confirmation{border:2px solid var(--green);background:var(--greenBg);padding:16px;border-radius:13px;margin-top:14px}.confirmation h3{color:var(--green);display:flex;align-items:center;gap:8px}.recap-grid{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:7px 15px;font-size:.91rem;margin:10px 0}.recap-grid b{text-align:right}.event-uncertain{border-left:4px solid var(--orange)}
+    .filters{display:flex;gap:9px;align-items:end;flex-wrap:wrap;margin:14px 0}.filters label{flex:1;min-width:175px}.history-scroll{overflow:auto;border:1px solid var(--line);border-radius:12px}.history-table{border-collapse:collapse;width:100%;min-width:660px;font-size:.88rem}.history-table th{background:var(--secondary);position:sticky;top:0;z-index:1;text-align:left;padding:11px 10px;white-space:nowrap}.history-table td{padding:9px 10px;border-top:1px solid var(--line);vertical-align:middle}.history-table .numeric{text-align:right;font-variant-numeric:tabular-nums}.history-table tr.kind-reading-row{border-left:4px solid var(--blue)}.history-table tr.kind-delivery-row{border-left:4px solid var(--green)}.history-table tr.kind-anchor-row{border-left:4px solid var(--orange)}.history-table tr.kind-rate-row{border-left:4px solid var(--violet)}.history-table tr.expanded{background:var(--secondary)}.history-details{background:var(--paper)}.history-details .detailgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:8px;margin:9px 0 13px}.detail{border-radius:9px;background:var(--secondary);padding:10px;overflow-wrap:anywhere}.detail span{display:block;color:var(--muted);font-size:.76rem;margin-bottom:4px}.history-empty{padding:20px}.count{color:var(--muted);font-size:.82rem;margin:8px 0}
+    .split{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.split>.panel{margin:0}.status-warning{color:var(--orange)}.more{margin:12px 0}
+    @media(max-width:750px){.cards{grid-template-columns:repeat(2,minmax(0,1fr))}.split{grid-template-columns:1fr}.card,.panel{padding:14px}.tabs{gap:3px}.tab{flex:1;padding:10px 7px;font-size:.86rem}.history-table{min-width:0;font-size:.78rem}.history-table th,.history-table td{padding:8px 5px}.history-table .optional{display:none}.history-table .pill{font-size:.69rem;padding:4px 6px}.history-table .datecol{white-space:nowrap}.history-table .numeric{white-space:nowrap}.history-table .small{font-size:.78rem;padding:7px}.filters label{min-width:130px}}
+    @media(max-width:420px){.cards{gap:8px}.card strong{font-size:1.2rem}.history-table .mobile-optional{display:none}.history-table .pill{white-space:normal}.section-title{align-items:flex-start}}
+
+/* V0.3 Ergonomie : tableau de bord réorganisé, rendu fluide sans bibliothèque externe */
+header{background:linear-gradient(105deg,#53321f,#6b4630);padding:16px 18px 0}
+header .wrap,main{max-width:1250px}
+header h1{font-size:1.75rem;letter-spacing:-.03em}
+header .subtitle{font-size:.82rem;margin:0 0 17px}
+.tab{font-size:.95rem;padding:12px 19px}
+.tab[aria-current="page"]{box-shadow:inset 0 3px 0 #d49356}
+.hero-panel{display:grid;grid-template-columns:minmax(240px,1.08fr) minmax(210px,.88fr) minmax(220px,.92fr);gap:18px;align-items:center;padding:22px;margin-bottom:14px;
+  border:1px solid var(--line);background:var(--paper)}
+.hero-stock{padding:10px 6px}
+.eyebrow{font-weight:750;color:var(--ink);font-size:1.09rem}
+.hero-liters{display:block;font-size:clamp(2.5rem,4.6vw,4.5rem);font-weight:800;letter-spacing:-.045em;white-space:nowrap;margin:12px 0 5px;color:var(--heading)}
+.hero-stock-meta{font-size:1rem;color:var(--muted);margin:6px 0 15px}
+.level-alert{border-radius:25px;display:inline-flex;padding:10px 16px;font-weight:750;background:var(--secondary);color:var(--ink)}
+.level-alert.warn{background:var(--orangeBg);color:var(--orange)}.level-alert.good{background:var(--greenBg);color:var(--green)}.level-alert.critical{background:var(--dangerBg);color:var(--danger)}
+.hero-gauge{display:flex;justify-content:center;align-items:center;gap:14px;min-height:226px}
+.gauge-scene{display:flex;gap:7px;align-items:stretch;height:207px}
+.gauge-scene .tank-track{width:69px;height:207px;border:3px solid #705a49;background:linear-gradient(to top,#fadbd8 0 14%,#ffe4bf 14% 50%,#dcefdc 50% 100%);border-radius:25px 25px 14px 14px;box-shadow:inset 0 2px 10px #4226;overflow:hidden}
+.gauge-scene .tank-fill{z-index:1;border-radius:0 0 10px 10px;transition:height .22s,background .22s;opacity:.96}
+.gauge-scene .tank-order{z-index:3;left:0;right:0;height:3px;background:#9a2020;box-shadow:0 0 0 1px #fff8}
+.gauge-scene .tank-graduation{position:absolute;left:50%;width:50%;height:1px;z-index:2;background:#fff9}
+.gauge-scene .g25{bottom:25%}.gauge-scene .g50{bottom:50%}.gauge-scene .g75{bottom:75%}
+.tank-ruler{display:flex;flex-direction:column;justify-content:space-between;font-size:.65rem;color:var(--muted);text-align:right;padding:5px 0}
+.gauge-stat{max-width:135px;font-size:.78rem;display:grid;gap:6px;color:var(--muted)}
+.gauge-stat strong{font-size:1.65rem;color:var(--ink)}
+.hero-extra{border-left:1px solid var(--line);padding:8px 0 8px 18px;display:grid;gap:11px}
+.hero-reading{background:var(--secondary);border-radius:12px;padding:13px;display:grid;gap:4px}
+.hero-reading strong{font-size:2rem;line-height:1.1}.hero-reading span{font-size:.78rem;color:var(--muted)}
+.hero-key{font-size:.79rem;display:flex;align-items:center;gap:7px}
+.dot{display:inline-block;flex:0 0 11px;width:11px;height:11px;border-radius:3px}.dot.good{background:#43a667}.dot.warn{background:#ed9e35}.dot.critical{background:#bc4545}
+.hero-extra .tank-state{font-weight:750;font-size:.95rem;margin-top:3px}
+.metric-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;margin-bottom:14px}
+.metric-card{background:var(--paper);padding:14px;border-radius:14px;box-shadow:var(--shadow);border-top:3px solid var(--line);display:grid;gap:4px}
+.metric-card>div{font-size:.82rem;font-weight:700}.metric-card strong{font-size:clamp(1.25rem,2.2vw,1.8rem);letter-spacing:-.025em;white-space:nowrap}.metric-card small{color:var(--muted);font-size:.78rem}
+.metric-blue{background:var(--blueBg);border-color:var(--blue)}.metric-violet{background:var(--violetBg);border-color:var(--violet)}.metric-green{background:var(--greenBg);border-color:var(--green)}
+.dashboard-lower{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:13px;margin-bottom:14px}
+.summary-card{background:var(--paper);border-radius:15px;box-shadow:var(--shadow);padding:16px;display:flex;flex-direction:column;gap:9px}
+.summary-card h2{font-size:1.05rem;margin:0;min-height:26px}.summary-date{color:var(--blue);font-size:.91rem}
+.summary-list{margin:0 0 5px}.summary-list>div{display:flex;justify-content:space-between;gap:10px;border-bottom:1px solid var(--line);padding:7px 0;font-size:.86rem}.summary-list dd{font-weight:800;margin:0;text-align:right}.summary-list dt{color:var(--muted)}
+.summary-card>button:last-child{margin-top:auto}.blue-button{background:var(--blue);color:#fff}.heat-line{display:flex;justify-content:space-between;gap:10px;background:var(--secondary);padding:11px;border-radius:9px;font-size:.86rem}.heat-line strong{text-align:right}
+.chart-caption{font-size:.78rem;color:var(--muted)}
+.mini-chart,.stats-chart{display:flex;align-items:flex-end;gap:9px;min-height:135px;margin:10px 0;overflow-x:auto;padding:4px 0 0}
+.bar-column{display:flex;align-items:center;justify-content:flex-end;flex-direction:column;gap:5px;flex:1 0 32px;min-width:0;height:124px}.bar-column .bar-value{font-size:.71rem;font-weight:750;white-space:nowrap}.bar-column .bar{width:80%;min-height:3px;border-radius:4px 4px 0 0;background:linear-gradient(180deg,#80b4e6,#286fbb)}.bar-column .bar-date{font-size:.7rem;white-space:nowrap;color:var(--muted)}
+.quick-actions{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:0 0 20px}.quick-actions button{padding:12px 10px;box-shadow:0 3px 8px #0001;font-size:.91rem}.quick-actions button:nth-child(1){background:#276ba9;color:#fff}.quick-actions button:nth-child(2){background:#38804c;color:#fff}.quick-actions button:nth-child(3){background:#bc641d;color:#fff}.quick-actions button:nth-child(4){background:#75539e;color:#fff}
+#page-accueil>.panel.section-blue,#page-accueil>.panel.section-green{scroll-margin-top:20px}
+.stat-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}.stat-card{padding:14px;border-radius:12px;background:var(--secondary);display:grid;gap:7px}.stat-card small{color:var(--muted)}.stat-card strong{font-size:1.4rem}
+.stats-chart{min-height:240px;padding-top:10px;max-width:1000px}.stats-chart .bar-column{height:220px;flex:1 0 45px}.stats-chart .bar-column .bar{max-width:60px}
+@media(max-width:1050px){.hero-panel{grid-template-columns:1fr 1fr}.hero-extra{grid-column:1 / -1;border-left:none;border-top:1px solid var(--line);display:flex;align-items:center;flex-wrap:wrap;gap:14px;padding:14px 0 0}.hero-reading{min-width:190px}.metric-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.dashboard-lower{grid-template-columns:repeat(2,minmax(0,1fr))}.dashboard-lower>.summary-card:last-child{grid-column:1/-1}}
+@media(max-width:690px){.hero-panel{grid-template-columns:1fr;gap:8px;padding:16px}.hero-stock{padding:5px}.hero-liters{font-size:3rem}.hero-gauge{justify-content:flex-start}.hero-extra{grid-column:1;gap:9px}.metric-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.dashboard-lower{grid-template-columns:1fr}.dashboard-lower>.summary-card:last-child{grid-column:1}.quick-actions{grid-template-columns:repeat(2,minmax(0,1fr))}.stat-grid{grid-template-columns:repeat(2,minmax(0,1fr))}header h1{font-size:1.4rem}.tab{font-size:.8rem;padding:11px 8px}}
+@media(max-width:390px){.tab{font-size:.73rem;padding:9px 5px}.metric-card strong{font-size:1.23rem}.quick-actions button{font-size:.8rem}}
+
+  </style>
+</head>
+<body data-theme="bronze">
+<header><div class="wrap"><h1>🔥 Ma Chaudière Mazout</h1><p class="subtitle">Hornu 7301 · V0.3 Ergonomie TEST · Données indépendantes</p>
+<nav class="tabs" aria-label="Pages de l’application"><button type="button" class="tab" data-page="accueil" aria-current="page">⌂ Accueil</button><button type="button" class="tab" data-page="historique">▤ Historique</button><button type="button" class="tab" data-page="reglages">⚙ Réglages</button><button type="button" class="tab" data-page="statistiques">▥ Statistiques</button></nav></div></header>
+<main>
+<p id="status" class="notice" role="status" aria-live="polite">Version ergonomique de test : ses données sont séparées de la V0.3 quotidienne. Importe une copie JSON pour commencer.</p>
+<section id="page-accueil" class="page" aria-label="Accueil">
+  <div class="hero-panel panel" aria-label="Vue générale de la chaudière">
+    <div class="hero-stock">
+      <div class="eyebrow">◈ Stock théorique</div>
+      <strong class="hero-liters" id="stock">—</strong>
+      <div class="hero-stock-meta">Cuve : <span id="heroCapacity">—</span> · <span id="heroPct">— %</span></div>
+      <div class="level-alert" id="levelAlert">Capacité à renseigner</div>
+    </div>
+    <div class="hero-gauge">
+      <div class="gauge-scene">
+        <div class="tank-ruler" aria-hidden="true"><span>100 %</span><span>75 %</span><span>50 %</span><span>25 %</span><span>0 %</span></div>
+        <div class="tank-track" id="tankTrack" role="img" aria-label="Niveau théorique de mazout">
+          <div class="tank-fill" id="tankFill"></div>
+          <div class="tank-order" id="tankOrder"></div>
+          <div class="tank-graduation g25"></div><div class="tank-graduation g50"></div><div class="tank-graduation g75"></div>
+        </div>
+      </div>
+      <div class="gauge-stat"><strong id="tankPct">— %</strong><div id="tankHelp">Capacité à renseigner dans Réglages</div><div id="tankOrderLabel">Trait : commande à 350 L</div></div>
+    </div>
+    <div class="hero-extra">
+      <div class="hero-reading"><div class="eyebrow">📏 Jauge mécanique</div><strong id="heroGauge">— cm</strong><span>Dernière lecture en cave</span></div>
+      <div class="hero-key"><span class="dot good"></span> Confortable : au moins 50 %</div>
+      <div class="hero-key"><span class="dot warn"></span> À surveiller : moins de 50 %</div>
+      <div class="hero-key"><span class="dot critical"></span> Commander : 350 L ou moins</div>
+      <div class="tank-state" id="tankState">—</div>
+    </div>
+  </div>
+  <div class="metric-grid" aria-label="Indicateurs rapides">
+    <div class="metric-card metric-blue"><div>Dernier compteur</div><strong id="meterNow">—</strong></div>
+    <div class="metric-card metric-violet"><div>Consigne intérieure</div><strong id="setpoint">—</strong></div>
+    <div class="metric-card metric-violet"><div>Débit brûleur</div><strong id="rateNow">—</strong></div>
+    <div class="metric-card metric-blue"><div>Depuis dernier relevé</div><strong id="sinceLast">—</strong><small id="sinceHours">—</small></div>
+    <div class="metric-card metric-green"><div id="usedLabel">Depuis début du suivi</div><strong id="used">—</strong></div>
+  </div>
+  <div class="dashboard-lower">
+    <div class="summary-card"><h2>▤ Dernier relevé enregistré</h2><div class="summary-date" id="lastWhen">Aucun relevé</div>
+      <dl class="summary-list"><div><dt>Compteur</dt><dd id="lastMeter">—</dd></div><div><dt>Jauge mesurée</dt><dd id="lastGauge">—</dd></div><div><dt>Chauffage complémentaire</dt><dd id="lastHeat">—</dd></div></dl>
+      <button type="button" class="blue-button" id="lastEdit">Voir / modifier le dernier relevé</button>
+    </div>
+    <div class="summary-card"><h2>♨ Chauffage complémentaire</h2>
+      <p class="muted" style="margin:0">Utilisation lors de la dernière période connue</p>
+      <div class="heat-line"><span>Poêle à pellets</span><strong id="pelletNow">Non renseigné</strong></div>
+      <div class="heat-line"><span>Feu ouvert / bois</span><strong id="woodNow">Non renseigné</strong></div>
+      <p class="hint">La consommation détaillée des combustibles est prévue pour la V0.4.</p>
+    </div>
+    <div class="summary-card"><h2>▥ Consommations récentes</h2><div class="chart-caption">Litres par intervalle entre deux relevés</div>
+      <div id="homeChart" class="mini-chart" aria-label="Graphique des dernières consommations"></div>
+      <button type="button" class="secondary small" data-page="statistiques">Voir les statistiques</button>
+    </div>
+  </div>
+  <div class="quick-actions" aria-label="Actions rapides">
+    <button type="button" id="quickReading">✎ Nouveau relevé</button>
+    <button type="button" id="quickDelivery">▰ Ajouter une livraison</button>
+    <button type="button" id="quickAnchor">≋ Correction de stock</button>
+    <button type="button" id="quickSettings">⚙ Réglages</button>
+  </div>
+  <section class="panel section-blue" id="readingSection"><h2>🔵 Nouveau relevé</h2>
+    <form id="readingForm"><div class="fields"><div class="field-with-now"><label>Date et heure<input type="datetime-local" id="readingDate" required></label><button type="button" class="secondary now-btn" data-date="readingDate">Date et heure actuelles</button></div><label>Compteur (heures décimales)<input id="readingMeter" inputmode="decimal" placeholder="Ex. 806,7" required></label><label>Consigne (°C)<input id="readingTemp" inputmode="decimal" required></label><label>Jauge (cm, facultatif)<input id="readingGauge" inputmode="decimal" placeholder="Ex. 46"></label></div>
+    <fieldset class="choices"><legend>Chauffage complémentaire depuis le précédent relevé</legend><label class="choice-row"><input type="radio" name="heatUse" id="heatUnknown" value="unknown" checked> Non renseigné</label><label class="choice-row"><input type="radio" name="heatUse" id="heatNone" value="none"> Aucun</label><label class="choice-row"><input type="radio" name="heatUse" id="heatUsed" value="used"> Oui, utilisé</label><div id="heatTypes" class="check-pair" hidden><label class="choice-row"><input type="checkbox" id="heatPellet"> Poêle à pellets</label><label class="choice-row"><input type="checkbox" id="heatWood"> Feu ouvert au bois</label></div></fieldset>
+    <label>Remarque<textarea id="readingNote" rows="2" placeholder="Facultatif"></textarea></label><button>Enregistrer le relevé</button></form>
+    <div id="readingConfirmation" class="confirmation" hidden aria-live="polite"><h3>✓ Relevé enregistré avec succès</h3><div class="recap-grid" id="readingRecap"></div><div class="actions"><button type="button" id="confirmationEdit" class="secondary">Modifier / compléter ce relevé</button><button type="button" id="confirmationHistory">Voir dans l’historique</button><button type="button" id="confirmationClose" class="secondary">Fermer</button></div></div>
+    <p class="hint">La jauge est indicative et ne change pas le stock calculé. Une erreur peut être corrigée dans l’historique.</p>
+  </section>
+  <section class="panel section-green" id="deliverySection"><h2>🟢 Livraison de mazout</h2><form id="deliveryForm"><div class="fields"><div class="field-with-now"><label>Date et heure<input type="datetime-local" id="deliveryDate" required></label><button type="button" class="secondary now-btn" data-date="deliveryDate">Date et heure actuelles</button></div><label>Litres livrés<input id="deliveryLiters" inputmode="decimal" placeholder="Ex. 500" required></label></div><label>Remarque<input id="deliveryNote" placeholder="Facultatif"></label><button>Enregistrer la livraison</button></form><p class="hint">Les livraisons antérieures au stock de référence ne sont pas comptées deux fois.</p></section>
+</section>
+<section id="page-historique" class="page" aria-label="Historique" hidden>
+  <section class="panel"><div class="section-title"><h2>Historique des événements</h2><span class="hint">Appuie sur « Détails » pour modifier ou supprimer</span></div>
+    <div class="filters"><label>Afficher<select id="historyFilter"><option value="all">Tous les événements</option><option value="reading">Relevés</option><option value="delivery">Livraisons</option><option value="anchor">Corrections de stock</option><option value="rate">Changements de débit</option></select></label><label>Rechercher (date, valeur, remarque)<input id="historySearch" type="search" placeholder="Ex. 07/11 ou 806,7"></label></div>
+    <label style="max-width:230px;margin-bottom:12px">Ordre chronologique<select id="historyOrder"><option value="desc">Du plus récent au plus ancien</option><option value="asc">Du plus ancien au plus récent</option></select></label><p class="count" id="historyCount"></p><p class="hint" id="calcNotice"></p>
+    <div class="history-scroll" id="history" tabindex="0"></div><button type="button" class="secondary more" id="historyMoreBtn" hidden>Afficher tous les événements</button>
+  </section>
+</section>
+<section id="page-statistiques" class="page" aria-label="Statistiques" hidden>
+  <section class="panel"><h2>▥ Statistiques light</h2>
+    <p class="hint">Calculées uniquement à partir de tes relevés réels. Le suivi débute à la date initiale connue, sans inventer les consommations antérieures.</p>
+    <div class="stat-grid"><div class="stat-card"><small>Depuis le début du suivi</small><strong id="statsTotal">—</strong></div><div class="stat-card"><small>Dernier intervalle relevé</small><strong id="statsLast">—</strong></div><div class="stat-card"><small>Moyenne sur la période connue</small><strong id="statsAvg">—</strong></div><div class="stat-card"><small>Total des livraisons après référence</small><strong id="statsDelivery">—</strong></div></div>
+    <h3 style="margin-top:22px">Consommation par relevé</h3><p class="hint">Chaque barre couvre l’intervalle depuis le relevé précédent ; les durées peuvent être différentes.</p>
+    <div id="statsChart" class="stats-chart" aria-label="Consommations par intervalle"></div>
+  </section>
+</section>
+<section id="page-reglages" class="page" aria-label="Réglages" hidden>
+  <section class="panel section-violet"><h2>🟣 Installation et cuve</h2><p class="hint">Les dimensions sont informatives. Elles ne changent pas les calculs de mazout tant qu’une capacité n’est pas renseignée.</p>
+    <form id="tankForm"><div class="fields"><label>Capacité totale (litres, facultatif)<input id="tankCapacity" inputmode="decimal" placeholder="À confirmer"></label><label>Type de cuve<select id="tankShape"><option value="unknown">Non précisé</option><option value="rect">Rectangulaire</option><option value="horizontal">Cylindre horizontal</option><option value="vertical">Cylindre vertical</option><option value="other">Autre</option></select></label><label>Longueur (cm)<input id="tankLength" inputmode="decimal" placeholder="Facultatif"></label><label>Largeur (cm)<input id="tankWidth" inputmode="decimal" placeholder="Facultatif"></label><label>Hauteur (cm)<input id="tankHeight" inputmode="decimal" placeholder="Facultatif"></label><label>Diamètre (cm)<input id="tankDiameter" inputmode="decimal" placeholder="Facultatif"></label><label>Conversion indicative jauge (L/cm)<input id="tankFactor" inputmode="decimal" value="20" required></label></div><button>Enregistrer les paramètres de cuve</button></form>
+    <p class="hint">Le pourcentage de réserve s’appuie sur le stock théorique / capacité renseignée, pas sur la hauteur de la jauge. La conversion cm → litres reste indicative.</p>
+  </section>
+  <section class="panel section-orange" id="anchorSection"><h2>🟠 Corriger le stock de référence</h2><p class="hint">Une correction constitue un nouveau point de départ ; elle ne s’ajoute pas au stock.</p><form id="anchorForm"><div class="fields"><div class="field-with-now"><label>Date et heure de mesure<input id="anchorDate" type="datetime-local" required></label><button type="button" class="secondary now-btn" data-date="anchorDate">Date et heure actuelles</button></div><label>Stock mesuré / estimé (litres)<input id="anchorLiters" inputmode="decimal" required placeholder="Ex. 920"></label><label>Compteur à cet instant (h, conseillé)<input id="anchorMeter" inputmode="decimal" placeholder="Ex. 806,7"></label></div><label>Motif de la correction<input id="anchorNote" placeholder="Ex. lecture de jauge"></label><button>Enregistrer la correction</button></form><p class="hint">Sans compteur au moment de la correction, la consommation peut être estimée.</p></section>
+  <section class="panel section-violet"><h2>🟣 Débit du brûleur</h2><p class="hint">Chaque nouveau réglage est daté. Les anciennes consommations conservent leur débit historique.</p><form id="rateForm"><div class="fields"><div class="field-with-now"><label>Date et heure du changement<input type="datetime-local" id="rateDate" required></label><button type="button" class="secondary now-btn" data-date="rateDate">Date et heure actuelles</button></div><label>Nouveau débit (L/h)<input id="rateLiters" inputmode="decimal" placeholder="Ex. 4,5" required></label><label>Compteur au changement (h, conseillé)<input id="rateMeter" inputmode="decimal" placeholder="Ex. 806,7"></label></div><label>Motif / intervention<input id="rateNote" placeholder="Ex. entretien du brûleur"></label><button>Enregistrer le changement de débit</button></form></section>
+  <section class="panel"><h2>Apparence</h2><label>Thème de l’application<select id="themeSelect"><option value="clair">Clair</option><option value="sombre">Sombre</option><option value="bronze" selected>Bronze</option><option value="technique">Technique</option></select></label><p class="hint">La distinction bleu / vert / orange / violet reste présente dans chaque thème.</p></section>
+  <section class="panel"><h2>Sauvegarde et échanges</h2><div class="actions"><button type="button" class="secondary" id="weatherBtn">Actualiser la météo</button><button type="button" class="secondary" id="csvBtn">Exporter CSV</button><button type="button" class="secondary" id="backupBtn">Sauvegarder JSON</button><button type="button" class="secondary" id="restoreBtn">Restaurer JSON</button><input type="file" id="restoreFile" accept=".json,application/json" hidden></div><p class="hint" id="weatherStatus"></p><p class="hint">La version ergonomique utilise un stockage séparé. Importe une copie JSON de la V0.3 quotidienne pour effectuer les essais ; il n’y a pas de synchronisation automatique.</p></section>
+</section>
+</main>
+<script src="./core.js"></script><script src="./app.js"></script>
+</body></html>
