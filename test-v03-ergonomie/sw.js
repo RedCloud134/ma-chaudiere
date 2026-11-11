@@ -1,5 +1,5 @@
 // Cache limité à /test-v03-ergonomie/ ; la quotidienne et la V0.2 ne sont jamais interceptées.
-const CACHE='chaudiere-hornu-v03-ergonomie-v3';
+const CACHE='chaudiere-hornu-v03-ergonomie-v5';
 const PREFIX='chaudiere-hornu-v03-ergonomie-';
 const ASSETS=['./','./index.html','./core.js','./app.js','./manifest.webmanifest','./icon.svg','./icon-192.png','./icon-512.png'];
 self.addEventListener('install',e=>{

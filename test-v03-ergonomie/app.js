@@ -8,7 +8,7 @@ let data=C.initial();
 let historyShowAll=false, lastSavedReadingId=null;
 let storageReady=true;
 try{const raw=localStorage.getItem(KEY);if(raw){const parsed=JSON.parse(raw);const reason=C.validate(parsed);if(reason)throw Error(reason);data=C.normalize(parsed)}}catch(err){storageReady=false;console.error('Données locales non chargées :',err)}
-function message(s,error=false){$('status').textContent=s;$('status').className='notice'+(error?' error':'')}
+function message(s,error=false){const el=$('status');el.hidden=false;el.textContent=s;el.className='notice'+(error?' error':'')}
 function commit(next,success='Modification enregistrée.',allowRecovery=false){
   if(!storageReady&&!allowRecovery){message('Stockage de test illisible : aucune écriture autorisée. Restaure une sauvegarde JSON valide avant de poursuivre.',true);return false}
   const reason=C.validate(next);

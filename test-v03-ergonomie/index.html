@@ -87,7 +87,7 @@ header .subtitle{font-size:.82rem;margin:0 0 17px}
 .chart-caption{font-size:.78rem;color:var(--muted)}
 .mini-chart,.stats-chart{display:flex;align-items:flex-end;gap:9px;min-height:135px;margin:10px 0;overflow-x:auto;padding:4px 0 0}
 .bar-column{display:flex;align-items:center;justify-content:flex-end;flex-direction:column;gap:5px;flex:1 0 32px;min-width:0;height:124px}.bar-column .bar-value{font-size:.71rem;font-weight:750;white-space:nowrap}.bar-column .bar{width:80%;min-height:3px;border-radius:4px 4px 0 0;background:linear-gradient(180deg,#80b4e6,#286fbb)}.bar-column .bar-date{font-size:.7rem;white-space:nowrap;color:var(--muted)}
-.quick-actions{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:0 0 20px}.quick-actions button{padding:12px 10px;box-shadow:0 3px 8px #0001;font-size:.91rem}.quick-actions button:nth-child(1){background:#276ba9;color:#fff}.quick-actions button:nth-child(2){background:#38804c;color:#fff}.quick-actions button:nth-child(3){background:#bc641d;color:#fff}.quick-actions button:nth-child(4){background:#75539e;color:#fff}
+.quick-actions{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:0 0 14px}.quick-actions button{padding:12px 10px;min-height:46px;box-shadow:0 3px 8px #0001;font-size:.91rem}.quick-actions button:nth-child(1){background:#276ba9;color:#fff}.quick-actions button:nth-child(2){background:#38804c;color:#fff}.quick-actions button:nth-child(3){background:#bc641d;color:#fff}.quick-actions button:nth-child(4){background:#75539e;color:#fff}
 #page-accueil>.panel.section-blue,#page-accueil>.panel.section-green{scroll-margin-top:20px}
 .stat-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}.stat-card{padding:14px;border-radius:12px;background:var(--secondary);display:grid;gap:7px}.stat-card small{color:var(--muted)}.stat-card strong{font-size:1.4rem}
 .stats-chart{min-height:240px;padding-top:10px;max-width:1000px}.stats-chart .bar-column{height:220px;flex:1 0 45px}.stats-chart .bar-column .bar{max-width:60px}
@@ -101,8 +101,14 @@ header .subtitle{font-size:.82rem;margin:0 0 17px}
 <header><div class="wrap"><h1>🔥 Ma Chaudière Mazout</h1><p class="subtitle">Hornu 7301 · V0.3 Ergonomie TEST · Données indépendantes</p>
 <nav class="tabs" aria-label="Pages de l’application"><button type="button" class="tab" data-page="accueil" aria-current="page">⌂ Accueil</button><button type="button" class="tab" data-page="historique">▤ Historique</button><button type="button" class="tab" data-page="reglages">⚙ Réglages</button><button type="button" class="tab" data-page="statistiques">▥ Statistiques</button></nav></div></header>
 <main>
-<p id="status" class="notice" role="status" aria-live="polite">Version ergonomique de test : ses données sont séparées de la V0.3 quotidienne. Importe une copie JSON pour commencer.</p>
+<p id="status" class="notice" role="status" aria-live="polite" hidden></p>
 <section id="page-accueil" class="page" aria-label="Accueil">
+  <div class="quick-actions" aria-label="Actions rapides">
+    <button type="button" id="quickReading">✎ Nouveau relevé</button>
+    <button type="button" id="quickDelivery">▰ Ajouter une livraison</button>
+    <button type="button" id="quickAnchor">≋ Correction de stock</button>
+    <button type="button" id="quickSettings">⚙ Réglages</button>
+  </div>
   <div class="hero-panel panel" aria-label="Vue générale de la chaudière">
     <div class="hero-stock">
       <div class="eyebrow">◈ Stock théorique</div>
@@ -157,12 +163,6 @@ header .subtitle{font-size:.82rem;margin:0 0 17px}
       <div id="homeChart" class="mini-chart" aria-label="Graphique des dernières consommations"></div>
       <button type="button" class="secondary small" data-page="statistiques">Voir les statistiques</button>
     </div>
-  </div>
-  <div class="quick-actions" aria-label="Actions rapides">
-    <button type="button" id="quickReading">✎ Nouveau relevé</button>
-    <button type="button" id="quickDelivery">▰ Ajouter une livraison</button>
-    <button type="button" id="quickAnchor">≋ Correction de stock</button>
-    <button type="button" id="quickSettings">⚙ Réglages</button>
   </div>
   <section class="panel section-blue" id="readingSection"><h2>🔵 Nouveau relevé</h2>
     <form id="readingForm"><div class="fields"><div class="field-with-now"><label>Date et heure<input type="datetime-local" id="readingDate" required></label><button type="button" class="secondary now-btn" data-date="readingDate">Date et heure actuelles</button></div><label>Compteur (heures décimales)<input id="readingMeter" inputmode="decimal" placeholder="Ex. 806,7" required></label><label>Consigne (°C)<input id="readingTemp" inputmode="decimal" required></label><label>Jauge (cm, facultatif)<input id="readingGauge" inputmode="decimal" placeholder="Ex. 46"></label></div>

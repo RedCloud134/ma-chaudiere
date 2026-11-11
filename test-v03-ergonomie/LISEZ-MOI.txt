@@ -50,3 +50,26 @@ CORRECTIF 11/11/2026 — JAUGE NUMÉRIQUE (V3)
 
 Mise à jour de ce dossier déjà existant sur GitHub : ouvrir /test-v03-ergonomie/
 puis importer UNIQUEMENT les fichiers de ce dossier (pas le dossier lui-même).
+
+CORRECTIF 11/11/2026 — RACCOURCIS EN HAUT (V4)
+------------------------------------------------
+- Les quatre boutons d'action rapide sont maintenant placés immédiatement
+  sous le bandeau d'information de la page Accueil, AVANT la grande jauge.
+- Sur smartphone, les quatre actions sont organisées sur deux lignes (2 × 2).
+- Le fonctionnement des boutons est inchangé : ils amènent aux formulaires
+  « Nouveau relevé », « Livraison », « Correction de stock » et « Réglages ».
+- Aucun calcul, fichier de données ou clé de stockage n'est modifié.
+- Cache de l'application : version 4 (pour forcer le rafraîchissement).
+
+Installation : sur GitHub, ouvrir /test-v03-ergonomie/, puis transférer
+les fichiers contenus DANS ce dossier et valider « Commit changes ».
+Le dossier /test-v03/ (version quotidienne) doit rester intact.
+
+CORRECTIF 11/11/2026 — BANDEAU INFORMATIF MASQUÉ
+-------------------------------------------------
+Le bandeau permanent invitant à importer le JSON n'est plus affiché.
+Les messages utiles (validation, sauvegarde, restauration, erreurs)
+continuent à s'afficher après une action.
+Ce correctif est inclus dans la version avec les boutons d'accès rapide
+placés en haut de la page, sous les onglets.
+Le cache passe à la version 5. Les calculs et les données sont inchangés.
